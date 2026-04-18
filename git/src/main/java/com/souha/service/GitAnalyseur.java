@@ -1,5 +1,7 @@
 package com.souha.service;
 
+import com.souha.model.Commit;
+import com.souha.model.GitHistory;
 import com.souha.model.StatUtilisateur;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.diff.DiffEntry;
@@ -11,29 +13,22 @@ import org.eclipse.jgit.util.io.DisabledOutputStream;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class GitAnalyseur {
 
-    public Map<String, StatUtilisateur> analyser(String repoPath) throws Exception {
+    private Map<Integer, StatUtilisateur> statsByUserId = new HashMap<>();
+    private Map<String, Integer> authorToId = new HashMap<>();
+    private List<Commit> allCommits = new ArrayList<>();
+    private GitHistory history = new GitHistory();
+    private int nextId = 1;
 
-        Map<String, StatUtilisateur> stats = new HashMap<>();
-        Git git;
+    public Map<Integer, StatUtilisateur> analyser(String repoPath) throws Exception {
 
-        if (repoPath.startsWith("http") || repoPath.startsWith("git@")) {
-            File tempDir = new File(System.getProperty("java.io.tmpdir"), "git-stats-clone");
-            if (tempDir.exists()) deleteFolder(tempDir);
-            git = Git.cloneRepository()
-                    .setURI(repoPath)
-                    .setDirectory(tempDir)
-                    .call();
-            System.out.println("Clone complete.");
-        } else {
-            git = Git.open(new File(repoPath));
-        }
-
+        Git git = Git.open(new File(repoPath));
         Repository repo = git.getRepository();
 
         DiffFormatter df = new DiffFormatter(DisabledOutputStream.INSTANCE);
@@ -41,14 +36,22 @@ public class GitAnalyseur {
         df.setDetectRenames(true);
 
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-
         Iterable<RevCommit> commits = git.log().all().call();
 
         for (RevCommit commit : commits) {
             String author = commit.getAuthorIdent().getName();
             String date   = sdf.format(commit.getAuthorIdent().getWhen());
+            String hash   = commit.getName();
 
-            int adds = 0, del = 0, files = 0;
+            // Assign unique ID to each new author
+            if (!authorToId.containsKey(author)) {
+                authorToId.put(author, nextId);
+                statsByUserId.put(nextId, new StatUtilisateur(nextId, author));
+                nextId++;
+            }
+
+            int userId = authorToId.get(author);
+            int added = 0, deleted = 0, files = 0;
 
             if (commit.getParentCount() > 0) {
                 RevCommit parent = commit.getParent(0);
@@ -57,29 +60,27 @@ public class GitAnalyseur {
 
                 for (DiffEntry entry : diffs) {
                     for (Edit edit : df.toFileHeader(entry).toEditList()) {
-                        adds  += edit.getEndB() - edit.getBeginB();
-                        del += edit.getEndA() - edit.getBeginA();
+                        added   += edit.getEndB() - edit.getBeginB();
+                        deleted += edit.getEndA() - edit.getBeginA();
                     }
                 }
             }
 
-            stats.putIfAbsent(author, new StatUtilisateur(author));
-            stats.get(author).commitAdd(adds, del, files, date);
+            // Update user stats
+            statsByUserId.get(userId).commitAdd(added, deleted, files, date);
+
+            // Store commit in history
+            Commit c = new Commit(hash, userId, author, date, added, deleted, files);
+            allCommits.add(c);
+            history.addCommit(c);
         }
 
         df.close();
         git.close();
-        return stats;
+        return statsByUserId;
     }
 
-    private void deleteFolder(File folder) {
-        File[] files = folder.listFiles();
-        if (files != null) {
-            for (File f : files) {
-                if (f.isDirectory()) deleteFolder(f);
-                else f.delete();
-            }
-        }
-        folder.delete();
-    }
+    public GitHistory getHistory()              { return history; }
+    public List<Commit> getAllCommits()          { return allCommits; }
+    public Map<String, Integer> getAuthorToId() { return authorToId; }
 }

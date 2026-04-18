@@ -1,7 +1,8 @@
 package com.souha;
-
-import com.souha.service.GitAnalyseur;
+import com.souha.model.GitHistory;
 import com.souha.model.StatUtilisateur;
+import com.souha.service.GitAnalyseur;
+
 import java.util.Map;
 import java.util.Scanner;
 
@@ -9,19 +10,19 @@ public class Main {
     public static void main(String[] args) throws Exception {
 
         Scanner scanner = new Scanner(System.in);
-        System.out.println(" Git Stats Analyser");
-        System.out.print("Enter local path or GitHub URL: ");
-        String input = scanner.nextLine().trim();
+        System.out.print("Enter local repo path");
+        String path = scanner.nextLine().trim();
         scanner.close();
 
         GitAnalyseur analyser = new GitAnalyseur();
-        Map<String, StatUtilisateur> stats = analyser.analyser(input);
+        Map<Integer, StatUtilisateur> stats = analyser.analyser(path);
 
-        System.out.println(" Results ");
+        System.out.println("Stats by User ID ");
         for (StatUtilisateur stat : stats.values()) {
-
             System.out.println(stat);
         }
-        System.out.println("Total authors found: " + stats.size());
+
+        GitHistory history = analyser.getHistory();
+        System.out.println("\n" + history);
     }
 }

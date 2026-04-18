@@ -2,6 +2,7 @@ package com.souha.model;
 
 public class StatUtilisateur {
 
+    private int userId;           // unique ID for B-Tree
     private String author;
     private int commitCount;
     private int linesAdded;
@@ -9,7 +10,8 @@ public class StatUtilisateur {
     private int filesModified;
     private String lastCommitDate;
 
-    public StatUtilisateur(String author) {
+    public StatUtilisateur(int userId, String author) {
+        this.userId = userId;
         this.author = author;
         this.commitCount = 0;
         this.linesAdded = 0;
@@ -18,24 +20,16 @@ public class StatUtilisateur {
         this.lastCommitDate = "";
     }
 
-    public void commitAdd(int adds, int del, int files, String date) {
+    public void commitAdd(int added, int deleted, int files, String date) {
         this.commitCount++;
-        this.linesAdded += adds;
-        this.linesDeleted += del;
+        this.linesAdded += added;
+        this.linesDeleted += deleted;
         this.filesModified += files;
         this.lastCommitDate = date;
     }
 
-    @Override
-    public String toString() {
-        return "Author         : " + author         + "\n" +
-                "Commits        : " + commitCount    + "\n" +
-                "Lines added    : " + linesAdded     + "\n" +
-                "Lines deleted  : " + linesDeleted   + "\n" +
-                "Files modified : " + filesModified  + "\n" +
-                "Last commit    : " + lastCommitDate + "\n";
-    }
 
+    public int getUserId()            { return userId; }
     public String getAuthor()         { return author; }
     public int getCommitCount()       { return commitCount; }
     public int getLinesAdded()        { return linesAdded; }
