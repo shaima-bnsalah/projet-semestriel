@@ -1,9 +1,12 @@
 package com.gitquality.git_quality.controller;
-
+import com.gitquality.git_quality.model.User;
 import com.gitquality.git_quality.service.AuthService;
 import lombok.Data;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,11 +20,16 @@ public class AuthController {
     public AuthController(AuthService authService) {
         this.authService = authService;
     }
+    
 
     @GetMapping("/test")
     public String test() {
         return "Le controller AuthController est bien actif !";
     }
+    @GetMapping("/users")
+public ResponseEntity<List<User>> getAllUsers() {
+    return ResponseEntity.ok(authService.getAllUsers());
+}
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest req) {
@@ -59,7 +67,9 @@ public ResponseEntity<?> forgotPassword(@RequestBody ForgotPasswordRequest req) 
     } catch (Exception e) {
         return ResponseEntity.badRequest().body(e.getMessage());
     }
+    
 }
+
 
 
     @Data
