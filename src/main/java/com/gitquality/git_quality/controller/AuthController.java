@@ -1,4 +1,6 @@
-package com.gitquality.git_quality.controller;import com.gitquality.service.AuthService;
+package com.gitquality.git_quality.controller;
+
+import com.gitquality.git_quality.service.AuthService;
 import lombok.Data;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
@@ -16,9 +18,14 @@ public class AuthController {
         this.authService = authService;
     }
 
+    @GetMapping("/test")
+    public String test() {
+        return "Le controller AuthController est bien actif !";
+    }
+
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest req) {
-        System.out.println(">>> REGISTER APPELÉ : " + req.getEmail());
+        System.out.println(">>> REQUETE REGISTER RECUE POUR : " + req.getEmail());
         try {
             String token = authService.register(
                 req.getUsername(),
@@ -27,28 +34,38 @@ public class AuthController {
             );
             return ResponseEntity.ok(new AuthResponse(token, "Inscription réussie !"));
         } catch (Exception e) {
-            System.out.println(">>> ERREUR : " + e.getMessage());
+            System.out.println(">>> ERREUR REGISTER : " + e.getMessage());
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest req) {
-        System.out.println(">>> LOGIN APPELÉ : " + req.getEmail());
+        System.out.println(">>> REQUETE LOGIN RECUE POUR : " + req.getEmail());
         try {
             String token = authService.login(req.getEmail(), req.getPassword());
             return ResponseEntity.ok(new AuthResponse(token, "Connexion réussie !"));
         } catch (Exception e) {
-            System.out.println(">>> ERREUR : " + e.getMessage());
+            System.out.println(">>> ERREUR LOGIN : " + e.getMessage());
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+    @PostMapping("/forgot-password")
+public ResponseEntity<?> forgotPassword(@RequestBody ForgotPasswordRequest req) {
+    System.out.println(">>> REINIT MOT DE PASSE POUR : " + req.getEmail());
+    try {
+        String message = authService.resetPassword(req.getEmail(), req.getNewPassword());
+        return ResponseEntity.ok(new AuthResponse(null, message));
+    } catch (Exception e) {
+        return ResponseEntity.badRequest().body(e.getMessage());
+    }
+}
 
-    // ✅ Classes INTERNES au controller
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    static class RegisterRequest {
+    public static class RegisterRequest {
         private String username;
         private String email;
         private String password;
@@ -57,7 +74,7 @@ public class AuthController {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    static class LoginRequest {
+    public static class LoginRequest {
         private String email;
         private String password;
     }
@@ -65,8 +82,15 @@ public class AuthController {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    static class AuthResponse {
+    public static class AuthResponse {
         private String token;
         private String message;
     }
+    @Data
+@NoArgsConstructor
+@AllArgsConstructor
+public static class ForgotPasswordRequest {
+    private String email;
+    private String newPassword;
 }
+}  

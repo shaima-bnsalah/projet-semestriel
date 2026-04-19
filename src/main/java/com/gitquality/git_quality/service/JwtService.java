@@ -27,5 +27,4 @@ public class JwtService {
             .parseSignedClaims(token)
             .getPayload()
             .getSubject();
-    }
-}
+    }}

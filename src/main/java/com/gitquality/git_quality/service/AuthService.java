@@ -1,6 +1,11 @@
+package com.gitquality.git_quality.service;
+
 import com.gitquality.git_quality.btree.BTree;
 import com.gitquality.git_quality.model.User;
 import com.gitquality.git_quality.service.JwtService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
+import java.util.UUID;
 
 @Service
 public class AuthService {
@@ -9,7 +14,6 @@ public class AuthService {
     private final BCryptPasswordEncoder encoder;
     private final JwtService jwtService;
 
-    // ✅ Spring injecte BCryptPasswordEncoder depuis SecurityConfig
     public AuthService(JwtService jwtService, BCryptPasswordEncoder encoder) {
         this.jwtService = jwtService;
         this.encoder = encoder;
@@ -37,4 +41,16 @@ public class AuthService {
             throw new RuntimeException("Mot de passe incorrect !");
         return jwtService.generateToken(email);
     }
+    public String resetPassword(String email, String newPassword) {
+    User user = userTree.search(email);
+    if (user == null) {
+        throw new RuntimeException("Utilisateur non trouvé !");
+    }
+    
+    user.setPassword(encoder.encode(newPassword));
+    
+    userTree.insert(email, user);
+    
+    return "Mot de passe mis à jour avec succès !";
+}
 }
