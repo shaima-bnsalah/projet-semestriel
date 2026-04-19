@@ -1,5 +1,5 @@
 package com.gitquality.git_quality.service;
-
+import java.util.Random;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gitquality.git_quality.btree.BTree;
@@ -17,7 +17,7 @@ import java.util.UUID;
 @Service
 public class AuthService {
 
-    private final BTree<String, User> userTree = new BTree<>();
+    private BTree<String, User> userTree = new BTree<>();
     private final BCryptPasswordEncoder encoder;
     private final JwtService jwtService;
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -33,30 +33,62 @@ public class AuthService {
         loadDataFromFile();
     }
 
-    public String register(String username, String email, String password) {
-        if (userTree.search(email) != null) {
-            throw new RuntimeException("Email déjà utilisé !");
-        }
-        User user = new User(UUID.randomUUID().toString(), username, email, encoder.encode(password));
-        userTree.insert(email, user);
-        
-        saveDataToFile(); 
-        return jwtService.generateToken(email);
+  public String register(String username, String email, String password) {
+    if (userTree.search(email) != null) {
+        throw new RuntimeException("Email déjà utilisé !");
     }
 
-    public String login(String email, String password) {
-        User user = userTree.search(email);
-        if (user == null) throw new RuntimeException("Utilisateur non trouvé !");
-        if (!encoder.matches(password, user.getPassword())) throw new RuntimeException("Mot de passe incorrect !");
-        return jwtService.generateToken(email);
+    String code = String.format("%06d", new Random().nextInt(999999));
+
+    User user = new User(
+        UUID.randomUUID().toString(),
+        username,
+        email,
+        encoder.encode(password),
+        code,   
+        false   
+    );
+
+    userTree.insert(email, user);
+    saveDataToFile();
+
+    System.out.println("*****************");
+    System.out.println("EMAIL ENVOYÉ À : " + email);
+    System.out.println("VOTRE CODE DE VÉRIFICATION EST : " + code);
+    System.out.println("*****************");
+
+    return "Code de vérification envoyé à votre email.";
+}
+
+   public String login(String email, String password) {
+    User user = userTree.search(email);
+    if (user == null) throw new RuntimeException("Utilisateur non trouvé !");
+    if (!user.isVerified()) throw new RuntimeException("Veuillez d'abord vérifier votre email !");
+    if (!encoder.matches(password, user.getPassword())) throw new RuntimeException("Mot de passe incorrect !");
+    
+    return jwtService.generateToken(email);
+}
+
+public String verifyCode(String email, String code) {
+    User user = userTree.search(email);
+    if (user == null) throw new RuntimeException("Utilisateur non trouvé");
+    
+    if (user.getVerificationCode().equals(code)) {
+        user.setVerified(true);
+        user.setVerificationCode(null);
+        userTree.insert(email, user);
+        saveDataToFile();
+        return "Compte vérifié avec succès ! Vous pouvez maintenant vous connecter.";
+    } else {
+        throw new RuntimeException("Code de vérification incorrect.");
     }
+}
 
     public String resetPassword(String email, String newPassword) {
         User user = userTree.search(email);
         if (user == null) throw new RuntimeException("Utilisateur non trouvé !");
         user.setPassword(encoder.encode(newPassword));
         userTree.insert(email, user);
-        
         saveDataToFile(); 
         return "Mot de passe mis à jour avec succès !";
     }
@@ -65,13 +97,29 @@ public class AuthService {
         return userTree.getAll();
     }
 
+    public void deleteUser(String email) {
+        User user = userTree.search(email);
+        if (user == null) throw new RuntimeException("Utilisateur non trouvé");
+
+        List<User> allUsers = new ArrayList<>(userTree.getAll());
+        allUsers.removeIf(u -> u.getEmail().equals(email));
+
+        try {
+            objectMapper.writeValue(new File(FILE_PATH), allUsers);
+            this.userTree = new BTree<>();
+            loadDataFromFile();
+            System.out.println(">>> Utilisateur " + email + " supprimé.");
+        } catch (IOException e) {
+            throw new RuntimeException("Erreur lors de la suppression physique.");
+        }
+    }
+
     private void saveDataToFile() {
         try {
             List<User> users = userTree.getAll();
             objectMapper.writeValue(new File(FILE_PATH), users);
-            System.out.println(">>> Données sauvegardées dans " + FILE_PATH);
         } catch (IOException e) {
-            System.out.println("Erreur lors de la sauvegarde : " + e.getMessage());
+            System.out.println("Erreur sauvegarde : " + e.getMessage());
         }
     }
 
@@ -83,9 +131,9 @@ public class AuthService {
                 for (User user : users) {
                     userTree.insert(user.getEmail(), user);
                 }
-                System.out.println(">>> " + users.size() + " utilisateurs chargés depuis le fichier.");
+                System.out.println(">>> " + users.size() + " utilisateurs chargés.");
             } catch (IOException e) {
-                System.out.println("Erreur lors du chargement : " + e.getMessage());
+                System.out.println("Erreur chargement : " + e.getMessage());
             }
         }
     }
