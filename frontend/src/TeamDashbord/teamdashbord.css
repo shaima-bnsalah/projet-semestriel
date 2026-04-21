@@ -1,0 +1,255 @@
+/* ─── Page ──────────────────────────────────────────────── */
+.td-page {
+  min-height: 100vh;
+  background: #0b1739;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+  position: relative;
+  overflow: hidden;
+}
+
+.td-noise-bg {
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(ellipse at 20% 10%, #0b1739 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, #0b1739 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.td-container {
+  position: relative;
+  z-index: 1;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 40px 32px;
+}
+
+/* ─── Titre ─────────────────────────────────────────────── */
+.td-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 32px;
+}
+
+.td-title-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #6366f1;
+  box-shadow: 0 0 12px #6366f1;
+}
+
+.td-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #94a3b8;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* ─── États ─────────────────────────────────────────────── */
+.td-state-msg {
+  font-size: 14px;
+  color: #64748b;
+  padding: 60px 0;
+  text-align: center;
+}
+
+.td-state-msg--error {
+  color: #f87171;
+}
+
+/* ─── Grille ─────────────────────────────────────────────── */
+.td-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+/* ─── Carte ─────────────────────────────────────────────── */
+.td-card {
+  background: linear-gradient(145deg, #0b1739, #0b1739);
+  border: 1px solid transparent;
+  border-radius: 20px;
+  padding: 28px 24px 22px;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(20px);
+  transition:
+    opacity 0.5s ease,
+    transform 0.5s ease,
+    box-shadow 0.25s ease,
+    background 0.25s ease;
+}
+
+.td-card--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.td-card:hover {
+  background: linear-gradient(145deg, #243347, #1c2840);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  transform: translateY(-4px);
+}
+
+.td-card:active {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.td-card-accent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: 20px 20px 0 0;
+}
+
+/* ─── En-tête de carte ───────────────────────────────────── */
+.td-card-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.td-avatar {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+  letter-spacing: 0.05em;
+}
+
+.td-member-name {
+  font-size: 17px;
+  font-weight: 700;
+  color: #f1f5f9;
+  letter-spacing: 0.02em;
+}
+
+.td-member-role {
+  font-size: 13px;
+  color: #7a8fa8;
+  margin-top: 3px;
+  letter-spacing: 0.05em;
+}
+
+/* ─── Stats ──────────────────────────────────────────────── */
+.td-stats-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.td-stat-box {
+  flex: 1;
+  background: #243347;
+  border-radius: 12px;
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  transition: background 0.2s ease;
+}
+
+.td-card:hover .td-stat-box {
+  background: #2c3e56;
+}
+
+.td-stat-value {
+  font-size: 17px;
+  font-weight: 700;
+  color: #f1f5f9;
+  letter-spacing: -0.02em;
+}
+
+.td-stat-value--danger {
+  color: #f87171;
+}
+
+.td-stat-label {
+  font-size: 10px;
+  color: #56708a;
+  letter-spacing: 0.05em;
+}
+
+/* ─── Activité ───────────────────────────────────────────── */
+.td-activity-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.td-activity-label {
+  font-size: 12px;
+  color: #7a8fa8;
+  letter-spacing: 0.05em;
+}
+
+.td-activity-pct {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.td-bar-track {
+  height: 6px;
+  background: #243347;
+  border-radius: 99px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.td-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  width: 0;
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ─── Statut ─────────────────────────────────────────────── */
+.td-status-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.td-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.td-status-dot--online {
+  background: #22c55e;
+  box-shadow: 0 0 8px #22c55e;
+}
+
+.td-status-dot--offline {
+  background: transparent;
+  border: 1.5px solid #4a5e74;
+}
+
+.td-status-text {
+  font-size: 12px;
+  letter-spacing: 0.05em;
+}
+
+.td-status-text--online  { color: #22c55e; }
+.td-status-text--offline { color: #4a5e74; }

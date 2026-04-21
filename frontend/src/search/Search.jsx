@@ -27,8 +27,7 @@ function AlertIcon() {
     </svg>
   );
 }
-
-export default function Search() {
+export default function Search({ goToDashboard }) {
   const [url, setUrl] = useState("");
   const [focused, setFocused] = useState(false);
   const [error, setError] = useState("");
@@ -37,25 +36,26 @@ export default function Search() {
 
   const isValidGithubUrl = (val) =>
     /^https?:\/\/(www\.)?github\.com\/[^/\s]+/.test(val.trim());
+const handleSearch = () => {
+  setError("");
+  setResult(null);
 
-  const handleSearch = () => {
-    setError("");
-    setResult(null);
-    if (!url.trim()) {
-      setError("Veuillez entrer une URL GitHub.");
-      return;
-    }
-    if (!isValidGithubUrl(url)) {
-      setError("URL invalide. Ex: https://github.com/");
-      return;
-    }
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      setResult(url.trim());
-    }, 900);
-  };
+  if (!url.trim()) {
+    setError("Veuillez entrer une URL GitHub.");
+    return;
+  }
 
+  if (!isValidGithubUrl(url)) {
+    setError("URL invalide. Ex: https://github.com/");
+    return;
+  }
+  setLoading(true);
+  setTimeout(() => {
+    setLoading(false);
+    setResult(url);
+    goToDashboard();
+  }, 800);
+};
   const handleKeyDown = (e) => {
     if (e.key === "Enter") handleSearch();
   };
@@ -112,13 +112,6 @@ export default function Search() {
             </>
           )}
         </button>
-
-        {result && (
-          <div className="gs-result">
-            <p className="gs-result-label"> trouvé</p>
-            <p className="gs-result-url">{result}</p>
-          </div>
-        )}
 
       </div>
     </div>
