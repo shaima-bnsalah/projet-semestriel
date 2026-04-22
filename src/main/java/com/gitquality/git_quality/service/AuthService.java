@@ -108,7 +108,7 @@ public String verifyCode(String email, String code) {
             objectMapper.writeValue(new File(FILE_PATH), allUsers);
             this.userTree = new BTree<>();
             loadDataFromFile();
-            System.out.println(">>> Utilisateur " + email + " supprimé.");
+            System.out.println(" Utilisateur " + email + " supprimé.");
         } catch (IOException e) {
             throw new RuntimeException("Erreur lors de la suppression physique.");
         }
