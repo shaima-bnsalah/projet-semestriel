@@ -1,0 +1,20 @@
+{
+  "commits" : [ {
+    "date" : "2026-04-17",
+    "linesAdded" : 0,
+    "author" : "shaima-bnsalah",
+    "userId" : 1,
+    "linesDeleted" : 0,
+    "hash" : "cb6bee0299ac8d21d143684de1e46ede2ad0fffc",
+    "filesModified" : 0
+  } ],
+  "users" : [ {
+    "linesAdded" : 0,
+    "author" : "shaima-bnsalah",
+    "commitCount" : 1,
+    "lastCommitDate" : "2026-04-17",
+    "userId" : 1,
+    "linesDeleted" : 0,
+    "filesModified" : 0
+  } ]
+}
