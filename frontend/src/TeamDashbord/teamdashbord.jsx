@@ -1,33 +1,21 @@
 import { useState, useEffect } from "react";
 import "./teamdashbord.css";
 
-// ─── COLORS ─────────────────────────────
-const ROLE_COLORS = {
-  "Lead Dev": { color: "#4f46e5", barColor: "#6366f1" },
-  "Backend":  { color: "#0d9488", barColor: "#14b8a6" },
-  "Frontend": { color: "#7c3aed", barColor: "#8b5cf6" },
-  "DevOps":   { color: "#b45309", barColor: "#f59e0b" },
-  "Mobile":   { color: "#9d174d", barColor: "#ec4899" },
-  "QA":       { color: "#065f46", barColor: "#10b981" },
-};
-
-const DEFAULT_COLOR = { color: "#334155", barColor: "#64748b" };
-
-function getRoleColors(role) {
-  return ROLE_COLORS[role] ?? DEFAULT_COLOR;
+function getUniqueColor(id) {
+  return `hsl(${(id * 137.5) % 360}, 65%, 55%)`;
 }
 
-// ─── MOCK DATA ──────────────────────────
-const MOCK_DATA = [
-  { id: 1, initials: "SK", name: "Sarah K.", role: "Lead Dev", commits: 1243, erreurs: 3, perf: "287ms", activite: 92, enLigne: true },
-  { id: 2, initials: "TM", name: "Mariem B.", role: "Backend", commits: 987, erreurs: 7, perf: "342ms", activite: 78, enLigne: true },
-  { id: 3, initials: "IB", name: "Souha A.", role: "Frontend", commits: 834, erreurs: 2, perf: "198ms", activite: 85, enLigne: false },
-  { id: 4, initials: "AR", name: "Shaima B.", role: "DevOps", commits: 712, erreurs: 11, perf: "412ms", activite: 61, enLigne: true },
-  { id: 5, initials: "LP", name: "taysir B.", role: "Mobile", commits: 601, erreurs: 5, perf: "261ms", activite: 73, enLigne: false },
-  { id: 6, initials: "ND", name: "Nour D.", role: "QA", commits: 389, erreurs: 1, perf: "224ms", activite: 68, enLigne: true },
+function getBarColor(id) {
+  return `hsl(${(id * 137.5) % 360}, 65%, 65%)`;
+}
+
+const DATA = [
+  { id: 11257728,   initials: "MB", name: "Mariem B.",  commits: 987, erreurs: 7,  perf: "342ms", activite: 78, enLigne: true  },
+  { id: 245715,     initials: "SA", name: "Souha A.",   commits: 834, erreurs: 2,  perf: "198ms", activite: 85, enLigne: false },
+  { id: 8275183,    initials: "SB", name: "Shaima B.",  commits: 712, erreurs: 11, perf: "412ms", activite: 61, enLigne: true  },
+  { id: 7587287635, initials: "TB", name: "Taysir B.",  commits: 601, erreurs: 5,  perf: "261ms", activite: 73, enLigne: false },
 ];
 
-// ─── ANIMATED BAR ───────────────────────
 function AnimatedBar({ value, color, delay = 0 }) {
   const [width, setWidth] = useState(0);
 
@@ -46,10 +34,11 @@ function AnimatedBar({ value, color, delay = 0 }) {
   );
 }
 
-// ─── MEMBER CARD ────────────────────────
 function MemberCard({ member, index }) {
   const [visible, setVisible] = useState(false);
-  const { color, barColor } = getRoleColors(member.role);
+
+  const color    = getUniqueColor(member.id);
+  const barColor = getBarColor(member.id);
 
   useEffect(() => {
     const timer = setTimeout(() => setVisible(true), index * 100);
@@ -76,16 +65,17 @@ function MemberCard({ member, index }) {
         >
           {member.initials}
         </div>
-
         <div>
           <div className="td-member-name">{member.name}</div>
-          <div className="td-member-role">{member.role}</div>
         </div>
       </div>
 
+      
       <div className="td-stats-row">
         <div className="td-stat-box">
-          <span className="td-stat-value">{member.commits.toLocaleString("fr-FR")}</span>
+          <span className="td-stat-value">
+            {member.commits.toLocaleString("fr-FR")}
+          </span>
           <span className="td-stat-label">commits</span>
         </div>
 
@@ -108,7 +98,6 @@ function MemberCard({ member, index }) {
           {member.activite}%
         </span>
       </div>
-
       <AnimatedBar value={member.activite} color={barColor} delay={index * 100} />
 
       <div className="td-status-row">
@@ -121,14 +110,12 @@ function MemberCard({ member, index }) {
   );
 }
 
-// ─── DASHBOARD ──────────────────────────
 export default function TeamDashboard() {
   const [team, setTeam] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
-    setTeam(MOCK_DATA);
+    setTeam(DATA);
     setLoading(false);
   }, []);
 
@@ -140,13 +127,12 @@ export default function TeamDashboard() {
         <div className="td-title-row">
           <div className="td-title-dot" />
           <h1 className="td-title">Équipe</h1>
+          <span className="td-count">{team.length} membres</span>
         </div>
 
         {loading && <div className="td-state-msg">Chargement…</div>}
 
-        {error && <div className="td-state-msg td-state-msg--error">{error}</div>}
-
-        {!loading && !error && (
+        {!loading && (
           <div className="td-grid">
             {team.map((member, i) => (
               <MemberCard key={member.id} member={member} index={i} />

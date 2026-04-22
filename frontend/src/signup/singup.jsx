@@ -1,7 +1,6 @@
 import { useState } from "react";
 import "./signup.css";
 import img from "./image1.png";
-
 export default function SignUp({ onLogin }) {
   const [email, setEmail] = useState("");
   const [pwd, setPwd] = useState("");
@@ -11,7 +10,6 @@ export default function SignUp({ onLogin }) {
   const [error, setError] = useState("");
   const [step, setStep] = useState("form");
   const [code, setCode] = useState("");
-
   const GithubIcon = () => (
     <svg viewBox="0 0 16 16">
       <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38
@@ -80,8 +78,6 @@ export default function SignUp({ onLogin }) {
           {step === "form" && (
             <>
               <div className="gt-fields">
-
-                {/* EMAIL */}
                 <div className="gt-field">
                   <input
                     className="gt-input"
@@ -91,7 +87,6 @@ export default function SignUp({ onLogin }) {
                     onChange={e => setEmail(e.target.value)}
                   />
                 </div>
-
                 <div className="gt-field">
                   <input
                     className="gt-input"
