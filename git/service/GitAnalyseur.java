@@ -43,7 +43,6 @@ public class GitAnalyseur {
             String date   = sdf.format(commit.getAuthorIdent().getWhen());
             String hash   = commit.getName();
 
-            // Assign unique ID to each new author
             if (!authorToId.containsKey(author)) {
                 authorToId.put(author, nextId);
                 statsByUserId.put(nextId, new StatUtilisateur(nextId, author));
@@ -66,10 +65,8 @@ public class GitAnalyseur {
                 }
             }
 
-            // Update user stats
             statsByUserId.get(userId).commitAdd(added, deleted, files, date);
 
-            // Store commit in history
             Commit c = new Commit(hash, userId, author, date, added, deleted, files);
             allCommits.add(c);
             history.addCommit(c);

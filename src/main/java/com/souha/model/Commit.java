@@ -2,7 +2,7 @@ package com.souha.model;
 
 public class Commit {
 
-    private String hash;        // commit ID for B-Tree
+    private String hash;
     private int userId;
     private String author;
     private String date;

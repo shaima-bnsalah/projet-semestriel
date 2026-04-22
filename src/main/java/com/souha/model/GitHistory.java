@@ -51,7 +51,7 @@ public class GitHistory {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("=== Git History (").append(commits.size()).append(" commits) ===\n");
+        sb.append(" Git History (").append(commits.size()).append(" commits) \n");
         for (Commit c : commits) {
             sb.append("-----------------------------\n");
             sb.append(c.toString());

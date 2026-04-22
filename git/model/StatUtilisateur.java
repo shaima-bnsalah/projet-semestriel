@@ -2,7 +2,7 @@ package com.souha.model;
 
 public class StatUtilisateur {
 
-    private int userId;           // unique ID for B-Tree
+    private int userId;
     private String author;
     private int commitCount;
     private int linesAdded;
