@@ -1,7 +1,9 @@
 import { useState } from "react";
 import "./signup.css";
 import img from "./image1.png";
-export default function SignUp({ onLogin }) {
+import { useNavigate } from "react-router-dom";
+
+export default function SignUp() {
   const [email, setEmail] = useState("");
   const [pwd, setPwd] = useState("");
   const [confirmPwd, setConfirmPwd] = useState("");
@@ -10,7 +12,10 @@ export default function SignUp({ onLogin }) {
   const [error, setError] = useState("");
   const [step, setStep] = useState("form");
   const [code, setCode] = useState("");
-  const GithubIcon = () => (
+
+  const navigate = useNavigate();
+
+const GithubIcon = () => (
     <svg viewBox="0 0 16 16">
       <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38
         0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13
@@ -22,7 +27,7 @@ export default function SignUp({ onLogin }) {
         1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
     </svg>
   );
-
+  // ✅ STEP 1
   const handleSubmit = () => {
     setError("");
 
@@ -39,10 +44,11 @@ export default function SignUp({ onLogin }) {
 
     setTimeout(() => {
       setLoading(false);
-      setStep("verify"); 
+      setStep("verify");
     }, 1200);
   };
 
+  // ✅ STEP 2
   const handleVerify = () => {
     if (!code) return setError("Entrer le code");
 
@@ -50,7 +56,7 @@ export default function SignUp({ onLogin }) {
 
     setTimeout(() => {
       setLoading(false);
-      onLogin?.(); 
+      navigate("/search"); // ✔ navigation propre
     }, 1000);
   };
 
@@ -74,53 +80,47 @@ export default function SignUp({ onLogin }) {
 
           {error && <div className="gt-error">{error}</div>}
 
-     
           {step === "form" && (
             <>
               <div className="gt-fields">
-                <div className="gt-field">
-                  <input
-                    className="gt-input"
-                    type="email"
-                    placeholder="votre@email.com"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                  />
-                </div>
-                <div className="gt-field">
-                  <input
-                    className="gt-input"
-                    type={showPwd ? "text" : "password"}
-                    placeholder="Mot de passe"
-                    value={pwd}
-                    onChange={e => setPwd(e.target.value)}
-                  />
-                </div>
 
-               
-                <div className="gt-field">
-                  <input
-                    className="gt-input"
-                    type={showPwd ? "text" : "password"}
-                    placeholder="Confirmer mot de passe"
-                    value={confirmPwd}
-                    onChange={e => setConfirmPwd(e.target.value)}
-                  />
+                <input
+                  className="gt-input"
+                  type="email"
+                  placeholder="votre@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
 
-                  <span className="gt-eye" onClick={() => setShowPwd(v => !v)}>
-                    👁
-                  </span>
-                </div>
+                <input
+                  className="gt-input"
+                  type={showPwd ? "text" : "password"}
+                  placeholder="Mot de passe"
+                  value={pwd}
+                  onChange={(e) => setPwd(e.target.value)}
+                />
 
+                <input
+                  className="gt-input"
+                  type={showPwd ? "text" : "password"}
+                  placeholder="Confirmer mot de passe"
+                  value={confirmPwd}
+                  onChange={(e) => setConfirmPwd(e.target.value)}
+                />
+
+                <span onClick={() => setShowPwd(v => !v)}>👁</span>
               </div>
 
-              <button className="gt-btn" onClick={handleSubmit} disabled={loading}>
+              <button
+                className="gt-btn"
+                onClick={handleSubmit}
+                disabled={loading}
+              >
                 {loading ? <div className="gt-spin" /> : "Créer un compte"}
               </button>
             </>
           )}
 
-   
           {step === "verify" && (
             <div className="gt-fields">
 
@@ -132,19 +132,19 @@ export default function SignUp({ onLogin }) {
                 className="gt-input"
                 placeholder="Entrer le code"
                 value={code}
-                onChange={e => setCode(e.target.value)}
+                onChange={(e) => setCode(e.target.value)}
               />
 
-              <button className="gt-btn" onClick={handleVerify} disabled={loading}>
+              <button
+                className="gt-btn"
+                onClick={handleVerify}
+                disabled={loading}
+              >
                 {loading ? <div className="gt-spin" /> : "Vérifier"}
               </button>
 
             </div>
           )}
-
-          <button className="gt-gh">
-            <GithubIcon /> Continuer avec GitHub
-          </button>
 
         </div>
       </div>

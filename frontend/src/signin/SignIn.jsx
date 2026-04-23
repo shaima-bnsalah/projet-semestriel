@@ -1,26 +1,48 @@
 import { useState } from "react";
 import "./SignIn.css";
-import img from "./image1.png"; 
+import img from "./image1.png";
+import { useNavigate } from "react-router-dom";
 
-export default function SignIn({ onLogin, goToSignUp }) {
-  const [email, setEmail]       = useState("");
-  const [pwd, setPwd]           = useState("");
-  const [showPwd, setShowPwd]   = useState(false);
+export default function SignIn() {
+  const [email, setEmail] = useState("");
+  const [pwd, setPwd] = useState("");
+  const [showPwd, setShowPwd] = useState(false);
   const [remember, setRemember] = useState(false);
-  const [loading, setLoading]   = useState(false);
-  const [error, setError]       = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
+  const navigate = useNavigate();
+
+  // ✅ LOGIN
   const handleSubmit = () => {
     setError("");
-    if (!email.trim() || !pwd) return setError("Veuillez remplir tous les champs.");
-    if (!email.includes("@"))  return setError("Adresse email invalide.");
+
+    if (!email.trim() || !pwd) {
+      setError("Veuillez remplir tous les champs.");
+      return false;
+    }
+
+    if (!email.includes("@")) {
+      setError("Adresse email invalide.");
+      return false;
+    }
+
     setLoading(true);
-    setTimeout(() => { setLoading(false); onLogin?.("email"); }, 1400);
+
+    setTimeout(() => {
+      setLoading(false);
+    }, 1400);
+
+    return true;
   };
 
+  // ✅ GITHUB LOGIN
   const handleGH = () => {
     setLoading(true);
-    setTimeout(() => { setLoading(false); onLogin?.("github"); }, 900);
+
+    setTimeout(() => {
+      setLoading(false);
+    }, 900);
   };
 
   const GithubIcon = () => (
@@ -39,110 +61,134 @@ export default function SignIn({ onLogin, goToSignUp }) {
   return (
     <div className="gt-login">
 
+      {/* BACKGROUND */}
       <div className="gt-bg">
         <img src={img} alt="" />
       </div>
 
+      {/* CARD */}
       <div className="gt-card">
-<div className="gt-card-inner">
-        <div className="gt-logo">
-          <div className="gt-logo-mark"><GithubIcon /></div>
-          <span className="gt-logo-name">GitTrack</span>
-        </div>
+        <div className="gt-card-inner">
 
-        <h1 className="gt-h1">Bon retour,<br /><em>bienvenue.</em></h1>
-        <p className="gt-sub">Connexion à votre espace de suivi.</p>
-
-        {error && <div className="gt-error">{error}</div>}
-
-        <div className="gt-fields">
-          <div className="gt-field">
-            <span className="gt-ico">
-              <svg viewBox="0 0 16 16">
-                <path d="M2 4h12v10H2z"/><path d="M2 4l6 6 6-6"/>
-              </svg>
-            </span>
-            <input
-              className={`gt-input${error && !email ? " error" : ""}`}
-              type="email"
-              placeholder="votre@email.com"
-              value={email}
-              onChange={e => { setEmail(e.target.value); setError(""); }}
-              onKeyDown={e => e.key === "Enter" && handleSubmit()}
-              autoFocus
-            />
+          {/* LOGO */}
+          <div className="gt-logo">
+            <div className="gt-logo-mark">
+              <GithubIcon />
+            </div>
+            <span className="gt-logo-name">GitTrack</span>
           </div>
 
-          <div className="gt-field">
-            <span className="gt-ico">
-              <svg viewBox="0 0 16 16">
-                <rect x="3" y="8" width="10" height="7" rx="1.5"/>
-                <path d="M5 8V6a3 3 0 016 0v2"/>
-              </svg>
-            </span>
-            <input
-              className={`gt-input${error && !pwd ? " error" : ""}`}
-              type={showPwd ? "text" : "password"}
-              placeholder="Mot de passe"
-              value={pwd}
-              onChange={e => { setPwd(e.target.value); setError(""); }}
-              onKeyDown={e => e.key === "Enter" && handleSubmit()}
-            />
-            <span className="gt-eye" onClick={() => setShowPwd(v => !v)}>
-              {showPwd ? (
-                <svg viewBox="0 0 16 16">
-                  <path d="M1 8s3-5 7-5 7 5 7 5-3 5-7 5-7-5-7-5z"/>
-                  <circle cx="8" cy="8" r="2"/>
-                  <line x1="2" y1="2" x2="14" y2="14"/>
-                </svg>
-              ) : (
-                <svg viewBox="0 0 16 16">
-                  <path d="M1 8s3-5 7-5 7 5 7 5-3 5-7 5-7-5-7-5z"/>
-                  <circle cx="8" cy="8" r="2"/>
-                </svg>
-              )}
-            </span>
-          </div>
-        </div>
+          <h1 className="gt-h1">
+            Bon retour,<br /><em>bienvenue.</em>
+          </h1>
+          <p className="gt-sub">Connexion à votre espace de suivi.</p>
 
-        <div className="gt-row">
-          <label className="gt-check">
-            <input type="checkbox" checked={remember} onChange={e => setRemember(e.target.checked)} />
-            <span>Rester connecté</span>
+          {/* ERROR */}
+          {error && <div className="gt-error">{error}</div>}
+
+          {/* FIELDS */}
+          <div className="gt-fields">
+
+            {/* EMAIL */}
+            <div className="gt-field">
+              <input
+                className={`gt-input${error ? " error" : ""}`}
+                type="email"
+                placeholder="votre@email.com"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setError("");
+                }}
+              />
+            </div>
+
+            {/* PASSWORD */}
+            <div className="gt-field">
+              <input
+                className={`gt-input${error ? " error" : ""}`}
+                type={showPwd ? "text" : "password"}
+                placeholder="Mot de passe"
+                value={pwd}
+                onChange={(e) => {
+                  setPwd(e.target.value);
+                  setError("");
+                }}
+              />
+
+              <span
+                className="gt-eye"
+                onClick={() => setShowPwd((v) => !v)}
+              >
+                👁
+              </span>
+            </div>
+          </div>
+
+          {/* CHECKBOX */}
+          <div className="gt-row">
+            <label>
+              <input
+                type="checkbox"
+                checked={remember}
+                onChange={(e) => setRemember(e.target.checked)}
+              />
+             <span>Rester connecté</span>
           </label>
           <span className="gt-forgot">Mot de passe oublié ?</span>
         </div>
 
-        <button className="gt-btn" onClick={handleSubmit} disabled={loading}>
-  {loading ? (
-    <div className="gt-spin" />
-  ) : (
-    <>
-      Se connecter
-      <svg viewBox="0 0 16 16">
-        <path d="M3 8h10M9 4l4 4-4 4" />
-      </svg>
-    </>
-  )}
-</button>
+          {/* LOGIN BUTTON */}
+          <button
+            className="gt-btn"
+            onClick={() => {
+              const ok = handleSubmit();
+              if (ok) navigate("/search");
+            }}
+            disabled={loading}
+          >
+            {loading ? (
+              <div className="gt-spin" />
+            ) : (
+              <>
+                Se connecter
+                <svg viewBox="0 0 16 16">
+                  <path d="M3 8h10M9 4l4 4-4 4" />
+                </svg>
+              </>
+            )}
+          </button>
 
-        <div className="gt-div">
-          <div className="gt-div-line" />
-          <span className="gt-div-txt">ou</span>
-          <div className="gt-div-line" />
+          {/* DIVIDER */}
+          <div className="gt-div">
+            <span>ou</span>
+          </div>
+
+          {/* GITHUB */}
+          <button
+            className="gt-gh"
+            onClick={() => {
+              handleGH();
+              navigate("/search");
+            }}
+            disabled={loading}
+          >
+            <GithubIcon /> Continuer avec GitHub
+          </button>
+
+          {/* SIGNUP */}
+          <div className="gt-foot">
+            Pas encore de compte ?{" "}
+            <span
+              onClick={() => navigate("/signup")}
+              style={{ cursor: "pointer", color: "#4f46e5" }}
+            >
+              Créer un compte
+            </span>
+          </div>
+
         </div>
-
-        <button className="gt-gh" onClick={handleGH} disabled={loading}>
-          <GithubIcon /> Continuer avec GitHub
-        </button>
-
-     <div className="gt-foot">
-  Pas encore de compte ?{" "}
-  <a onClick={goToSignUp}>Créer un compte</a>
-</div>
-
       </div>
-    </div>
     </div>
   );
 }
