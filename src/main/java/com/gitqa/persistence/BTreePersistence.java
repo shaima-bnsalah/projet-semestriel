@@ -1,8 +1,14 @@
 package com.gitqa.persistence;
 import com.gitqa.btree.BTree;
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 
 public class BTreePersistence {
+
+    private static final int BUFFER_SIZE = 64 * 1024;
 
     private final String filePath;
 
@@ -11,18 +17,31 @@ public class BTreePersistence {
     }
 
     public void save(BTree tree) throws IOException {
+        Path target = Paths.get(filePath);
+        Path tmp    = Paths.get(filePath + ".tmp");
+
         try (ObjectOutputStream oos = new ObjectOutputStream(
-                new BufferedOutputStream(new FileOutputStream(filePath)))) {
+                new BufferedOutputStream(
+                        Files.newOutputStream(tmp), BUFFER_SIZE))) {
             oos.writeObject(tree);
+        }
+
+        try {
+            Files.move(tmp, target,
+                    StandardCopyOption.REPLACE_EXISTING,
+                    StandardCopyOption.ATOMIC_MOVE);
+        } catch (IOException atomicFail) {
+            Files.move(tmp, target, StandardCopyOption.REPLACE_EXISTING);
         }
         System.out.println("[Saved] Tree written to " + filePath);
     }
 
     public BTree load() throws IOException, ClassNotFoundException {
-        File f = new File(filePath);
-        if (!f.exists()) return null;
+        Path p = Paths.get(filePath);
+        if (!Files.exists(p)) return null; // no file yet ? first run
         try (ObjectInputStream ois = new ObjectInputStream(
-                new BufferedInputStream(new FileInputStream(f)))) {
+                new BufferedInputStream(
+                        Files.newInputStream(p), BUFFER_SIZE))) {
             return (BTree) ois.readObject();
         }
     }
