@@ -26,7 +26,7 @@ public class CommitInfo implements Serializable {
         this.linesDeleted = linesDeleted;
         this.changedFiles = Collections.unmodifiableList(changedFiles);
     }
-    public String getsha()           { return sha; }
+    public String getSha()           { return sha; }
     public String getAuthor()        { return author; }
     public String getEmail()         { return email; }
     public long   getTimestamp()     { return timestamp; }
@@ -34,4 +34,42 @@ public class CommitInfo implements Serializable {
     public int    getLinesAdded()    { return linesAdded; }
     public int    getLinesDeleted()  { return linesDeleted; }
     public List<String> getChangedFiles() { return changedFiles; }
+    public String toJson() {
+        return "{"
+                + "\"sha\":\"" + sha + "\","
+                + "\"author\":\"" + author + "\","
+                + "\"email\":\"" + email + "\","
+                + "\"timestamp\":" + timestamp + ","
+                + "\"message\":\"" + message + "\","
+                + "\"linesAdded\":" + linesAdded + ","
+                + "\"linesDeleted\":" + linesDeleted
+                + "}";
+    }
+    public static CommitInfo fromJson(String json) {
+        return new CommitInfo(
+                extractField(json, "sha"),
+                extractField(json, "author"),
+                extractField(json, "email"),
+                Long.parseLong(extractField(json, "timestamp")),
+                extractField(json, "message"),
+                Integer.parseInt(extractField(json, "linesAdded")),
+                Integer.parseInt(extractField(json, "linesDeleted")),
+                Collections.emptyList()
+        );
+    }
+
+    private static String extractField(String json, String field) {
+        String search = "\"" + field + "\":";
+        int start = json.indexOf(search) + search.length();
+        // remove quotes if string value
+        if (json.charAt(start) == '"') {
+            start++;
+            int end = json.indexOf('"', start);
+            return json.substring(start, end);
+        }
+        // numeric value
+        int end = json.indexOf(',', start);
+        if (end == -1) end = json.indexOf('}', start);
+        return json.substring(start, end).trim();
+    }
 }

@@ -51,7 +51,7 @@ public class TEST {
         List<CommitInfo> all = tree.getAll();
         boolean isSorted = true;
         for (int i = 1; i < all.size(); i++) {
-            if (all.get(i).getsha().compareTo(all.get(i - 1).getsha()) < 0) {
+            if (all.get(i).getSha().compareTo(all.get(i - 1).getSha()) < 0) {
                 isSorted = false;
                 break;
             }

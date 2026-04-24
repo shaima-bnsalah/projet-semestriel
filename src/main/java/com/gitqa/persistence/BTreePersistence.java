@@ -38,7 +38,7 @@ public class BTreePersistence {
 
     public BTree load() throws IOException, ClassNotFoundException {
         Path p = Paths.get(filePath);
-        if (!Files.exists(p)) return null; // no file yet ? first run
+        if (!Files.exists(p)) return null;
         try (ObjectInputStream ois = new ObjectInputStream(
                 new BufferedInputStream(
                         Files.newInputStream(p), BUFFER_SIZE))) {

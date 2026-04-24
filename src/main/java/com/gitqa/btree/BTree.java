@@ -206,15 +206,15 @@ public class BTree implements Serializable {
 
         if (node.children[i].keyCount >= t) {
             CommitInfo pred = getPredecessor(node, i);
-            node.keys[i]   = pred.getsha();
+            node.keys[i]   = pred.getSha();
             node.values[i] = pred;
-            return deleteFromNode(node.children[i], pred.getsha());
+            return deleteFromNode(node.children[i], pred.getSha());
 
         } else if (node.children[i + 1].keyCount >= t) {
             CommitInfo succ = getSuccessor(node, i);
-            node.keys[i]   = succ.getsha();
+            node.keys[i]   = succ.getSha();
             node.values[i] = succ;
-            return deleteFromNode(node.children[i + 1], succ.getsha());
+            return deleteFromNode(node.children[i + 1], succ.getSha());
 
         } else {
             merge(node, i);

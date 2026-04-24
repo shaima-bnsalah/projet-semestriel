@@ -2,3 +2,4 @@ com/gitqa/btree/BTree.class
 com/gitqa/model/CommitInfo.class
 com/gitqa/persistence/BTreePersistence.class
 com/gitqa/btree/BTreeNode.class
+com/gitqa/Service/BTreeService.class
