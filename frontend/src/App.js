@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import SignIn from "./signin/SignIn";
 import Search from "./search/Search";
 import SignUp from "./signup/singup";
-import Teamdashbord from "./TeamDashbord/teamdashbord";
+import Teamdashbord from "./TeamDashbord/Dashbord";
 
 function App() {
   return (
