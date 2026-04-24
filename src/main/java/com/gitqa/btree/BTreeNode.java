@@ -5,7 +5,8 @@ import java.io.Serializable;
 
 public class BTreeNode implements Serializable {
 
-    int         t;
+    private static final long serialVersionUID = 1L;
+
     String[]    keys;
     CommitInfo[] values;
     BTreeNode[] children;
@@ -13,13 +14,10 @@ public class BTreeNode implements Serializable {
     boolean     isLeaf;
 
     public BTreeNode(int t, boolean isLeaf) {
-        this.t        = t;
         this.isLeaf   = isLeaf;
         this.keyCount = 0;
-
         this.keys     = new String[2 * t - 1];
         this.values   = new CommitInfo[2 * t - 1];
-
         this.children = new BTreeNode[2 * t];
     }
 }
