@@ -2,10 +2,13 @@ package com.gitqa.btree;
 
 import com.gitqa.model.CommitInfo;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BTree {
+public class BTree implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private BTreeNode root;
     private final int t;
@@ -18,6 +21,17 @@ public class BTree {
 
     public int size() { return size; }
     public BTreeNode getRoot() { return root; }
+
+    // Smallest index i in [0, keyCount] with node.keys[i] >= key (or keyCount if all are <).
+    private static int findKeyIndex(BTreeNode node, String key) {
+        int lo = 0, hi = node.keyCount;
+        while (lo < hi) {
+            int mid = (lo + hi) >>> 1;
+            if (node.keys[mid].compareTo(key) < 0) lo = mid + 1;
+            else                                   hi = mid;
+        }
+        return lo;
+    }
 
     // 1 : CREATE
 
@@ -36,24 +50,22 @@ public class BTree {
     }
 
     private void insertNonFull(BTreeNode node, String key, CommitInfo value) {
-        int i = node.keyCount - 1;
+        int pos = findKeyIndex(node, key);
         if (node.isLeaf) {
-            while (i >= 0 && key.compareTo(node.keys[i]) < 0) {
-                node.keys[i + 1]   = node.keys[i];
-                node.values[i + 1] = node.values[i];
-                i--;
+            int shift = node.keyCount - pos;
+            if (shift > 0) {
+                System.arraycopy(node.keys,   pos, node.keys,   pos + 1, shift);
+                System.arraycopy(node.values, pos, node.values, pos + 1, shift);
             }
-            node.keys[i + 1]   = key;
-            node.values[i + 1] = value;
+            node.keys[pos]   = key;
+            node.values[pos] = value;
             node.keyCount++;
         } else {
-            while (i >= 0 && key.compareTo(node.keys[i]) < 0) i--;
-            i++;
-            if (node.children[i].keyCount == 2 * t - 1) {
-                splitChild(node, i, node.children[i]);
-                if (key.compareTo(node.keys[i]) > 0) i++;
+            if (node.children[pos].keyCount == 2 * t - 1) {
+                splitChild(node, pos, node.children[pos]);
+                if (key.compareTo(node.keys[pos]) > 0) pos++;
             }
-            insertNonFull(node.children[i], key, value);
+            insertNonFull(node.children[pos], key, value);
         }
     }
 
@@ -61,27 +73,20 @@ public class BTree {
         BTreeNode newChild = new BTreeNode(t, fullChild.isLeaf);
         newChild.keyCount = t - 1;
 
-        for (int j = 0; j < t - 1; j++) {
-            newChild.keys[j]   = fullChild.keys[j + t];
-            newChild.values[j] = fullChild.values[j + t];
-        }
+        System.arraycopy(fullChild.keys,   t, newChild.keys,   0, t - 1);
+        System.arraycopy(fullChild.values, t, newChild.values, 0, t - 1);
         if (!fullChild.isLeaf) {
-            for (int j = 0; j < t; j++) {
-                newChild.children[j] = fullChild.children[j + t];
-            }
+            System.arraycopy(fullChild.children, t, newChild.children, 0, t);
         }
 
         fullChild.keyCount = t - 1;
 
-        for (int j = parent.keyCount; j > i; j--) {
-            parent.children[j + 1] = parent.children[j];
+        if (parent.keyCount - i > 0) {
+            System.arraycopy(parent.children, i + 1, parent.children, i + 2, parent.keyCount - i);
+            System.arraycopy(parent.keys,     i,     parent.keys,     i + 1, parent.keyCount - i);
+            System.arraycopy(parent.values,   i,     parent.values,   i + 1, parent.keyCount - i);
         }
         parent.children[i + 1] = newChild;
-
-        for (int j = parent.keyCount - 1; j >= i; j--) {
-            parent.keys[j + 1]   = parent.keys[j];
-            parent.values[j + 1] = parent.values[j];
-        }
         parent.keys[i]   = fullChild.keys[t - 1];
         parent.values[i] = fullChild.values[t - 1];
         parent.keyCount++;
@@ -90,21 +95,14 @@ public class BTree {
     // 2 : READ (search + getAll + rangeByDate)
 
     public CommitInfo search(String key) {
-        return searchNode(root, key);
-    }
-
-    private CommitInfo searchNode(BTreeNode node, String key) {
-        if (node == null) return null;
-
-        int i = 0;
-        while (i < node.keyCount && key.compareTo(node.keys[i]) > 0) i++;
-
-        if (i < node.keyCount && key.equals(node.keys[i]))
-            return node.values[i];
-
-        if (node.isLeaf) return null;
-
-        return searchNode(node.children[i], key);
+        BTreeNode node = root;
+        while (node != null) {
+            int i = findKeyIndex(node, key);
+            if (i < node.keyCount && key.equals(node.keys[i])) return node.values[i];
+            if (node.isLeaf) return null;
+            node = node.children[i];
+        }
+        return null;
     }
 
     public boolean contains(String key) {
@@ -120,41 +118,41 @@ public class BTree {
     }
 
     public List<CommitInfo> getAll() {
-        List<CommitInfo> all = new ArrayList<CommitInfo>();
+        List<CommitInfo> all = new ArrayList<>(size);
         traverseNode(root, all);
         return all;
     }
 
     public List<CommitInfo> rangeByDate(long fromEpoch, long toEpoch) {
-        List<CommitInfo> all = getAll();
-        List<CommitInfo> result = new ArrayList<CommitInfo>();
-        for (CommitInfo c : all) {
-            if (c.getTimestamp() >= fromEpoch && c.getTimestamp() <= toEpoch) {
-                result.add(c);
-            }
-        }
+        List<CommitInfo> result = new ArrayList<>();
+        collectRange(root, fromEpoch, toEpoch, result);
         return result;
+    }
+
+    private void collectRange(BTreeNode node, long from, long to, List<CommitInfo> result) {
+        if (node == null) return;
+        for (int i = 0; i < node.keyCount; i++) {
+            if (!node.isLeaf) collectRange(node.children[i], from, to, result);
+            long ts = node.values[i].getTimestamp();
+            if (ts >= from && ts <= to) result.add(node.values[i]);
+        }
+        if (!node.isLeaf) collectRange(node.children[node.keyCount], from, to, result);
     }
 
     // 3 : UPDATE
 
-
     public boolean update(String key, CommitInfo newValue) {
-        return updateNode(root, key, newValue);
-    }
-
-    private boolean updateNode(BTreeNode node, String key, CommitInfo newValue) {
-        int i = 0;
-        while (i < node.keyCount && key.compareTo(node.keys[i]) > 0) i++;
-
-        if (i < node.keyCount && key.equals(node.keys[i])) {
-            node.values[i] = newValue;
-            return true;
+        BTreeNode node = root;
+        while (node != null) {
+            int i = findKeyIndex(node, key);
+            if (i < node.keyCount && key.equals(node.keys[i])) {
+                node.values[i] = newValue;
+                return true;
+            }
+            if (node.isLeaf) return false;
+            node = node.children[i];
         }
-
-        if (node.isLeaf) return false;
-
-        return updateNode(node.children[i], key, newValue);
+        return false;
     }
 
     // 4 : DELETE
@@ -171,16 +169,14 @@ public class BTree {
     }
 
     private boolean deleteFromNode(BTreeNode node, String key) {
-        int i = 0;
-        while (i < node.keyCount && key.compareTo(node.keys[i]) > 0) i++;
+        int i = findKeyIndex(node, key);
 
         if (i < node.keyCount && key.equals(node.keys[i])) {
             if (node.isLeaf) {
                 removeFromLeaf(node, i);
                 return true;
-            } else {
-                return deleteFromInternalNode(node, i);
             }
+            return deleteFromInternalNode(node, i);
         }
 
         if (node.isLeaf) return false;
@@ -195,10 +191,13 @@ public class BTree {
     }
 
     private void removeFromLeaf(BTreeNode node, int i) {
-        for (int j = i + 1; j < node.keyCount; j++) {
-            node.keys[j - 1]   = node.keys[j];
-            node.values[j - 1] = node.values[j];
+        int tail = node.keyCount - i - 1;
+        if (tail > 0) {
+            System.arraycopy(node.keys,   i + 1, node.keys,   i, tail);
+            System.arraycopy(node.values, i + 1, node.values, i, tail);
         }
+        node.keys[node.keyCount - 1]   = null;
+        node.values[node.keyCount - 1] = null;
         node.keyCount--;
     }
 
@@ -250,22 +249,23 @@ public class BTree {
         BTreeNode child   = node.children[i];
         BTreeNode sibling = node.children[i - 1];
 
-        for (int j = child.keyCount - 1; j >= 0; j--) {
-            child.keys[j + 1]   = child.keys[j];
-            child.values[j + 1] = child.values[j];
-        }
+        System.arraycopy(child.keys,   0, child.keys,   1, child.keyCount);
+        System.arraycopy(child.values, 0, child.values, 1, child.keyCount);
         if (!child.isLeaf) {
-            for (int j = child.keyCount; j >= 0; j--)
-                child.children[j + 1] = child.children[j];
+            System.arraycopy(child.children, 0, child.children, 1, child.keyCount + 1);
         }
 
         child.keys[0]   = node.keys[i - 1];
         child.values[0] = node.values[i - 1];
-        if (!child.isLeaf)
+        if (!child.isLeaf) {
             child.children[0] = sibling.children[sibling.keyCount];
+            sibling.children[sibling.keyCount] = null;
+        }
 
         node.keys[i - 1]   = sibling.keys[sibling.keyCount - 1];
         node.values[i - 1] = sibling.values[sibling.keyCount - 1];
+        sibling.keys[sibling.keyCount - 1]   = null;
+        sibling.values[sibling.keyCount - 1] = null;
 
         child.keyCount++;
         sibling.keyCount--;
@@ -277,19 +277,20 @@ public class BTree {
 
         child.keys[child.keyCount]   = node.keys[i];
         child.values[child.keyCount] = node.values[i];
-        if (!child.isLeaf)
+        if (!child.isLeaf) {
             child.children[child.keyCount + 1] = sibling.children[0];
+        }
 
         node.keys[i]   = sibling.keys[0];
         node.values[i] = sibling.values[0];
 
-        for (int j = 1; j < sibling.keyCount; j++) {
-            sibling.keys[j - 1]   = sibling.keys[j];
-            sibling.values[j - 1] = sibling.values[j];
-        }
+        System.arraycopy(sibling.keys,   1, sibling.keys,   0, sibling.keyCount - 1);
+        System.arraycopy(sibling.values, 1, sibling.values, 0, sibling.keyCount - 1);
+        sibling.keys[sibling.keyCount - 1]   = null;
+        sibling.values[sibling.keyCount - 1] = null;
         if (!sibling.isLeaf) {
-            for (int j = 1; j <= sibling.keyCount; j++)
-                sibling.children[j - 1] = sibling.children[j];
+            System.arraycopy(sibling.children, 1, sibling.children, 0, sibling.keyCount);
+            sibling.children[sibling.keyCount] = null;
         }
 
         child.keyCount++;
@@ -303,24 +304,23 @@ public class BTree {
         leftChild.keys[t - 1]   = node.keys[i];
         leftChild.values[t - 1] = node.values[i];
 
-        for (int j = 0; j < rightChild.keyCount; j++) {
-            leftChild.keys[t + j]   = rightChild.keys[j];
-            leftChild.values[t + j] = rightChild.values[j];
-        }
+        System.arraycopy(rightChild.keys,   0, leftChild.keys,   t, rightChild.keyCount);
+        System.arraycopy(rightChild.values, 0, leftChild.values, t, rightChild.keyCount);
         if (!leftChild.isLeaf) {
-            for (int j = 0; j <= rightChild.keyCount; j++)
-                leftChild.children[t + j] = rightChild.children[j];
+            System.arraycopy(rightChild.children, 0, leftChild.children, t, rightChild.keyCount + 1);
         }
 
-        for (int j = i + 1; j < node.keyCount; j++) {
-            node.keys[j - 1]   = node.keys[j];
-            node.values[j - 1] = node.values[j];
+        int tail = node.keyCount - i - 1;
+        if (tail > 0) {
+            System.arraycopy(node.keys,     i + 1, node.keys,     i,     tail);
+            System.arraycopy(node.values,   i + 1, node.values,   i,     tail);
+            System.arraycopy(node.children, i + 2, node.children, i + 1, tail);
         }
-        for (int j = i + 2; j <= node.keyCount; j++)
-            node.children[j - 1] = node.children[j];
+        node.keys[node.keyCount - 1]       = null;
+        node.values[node.keyCount - 1]     = null;
+        node.children[node.keyCount]       = null;
 
         leftChild.keyCount += rightChild.keyCount + 1;
         node.keyCount--;
     }
-
 }
