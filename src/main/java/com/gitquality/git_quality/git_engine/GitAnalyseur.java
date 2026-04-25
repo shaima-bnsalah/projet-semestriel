@@ -65,8 +65,16 @@ public class GitAnalyseur {
                 }
             }
             stats.putIfAbsent(author, new StatUtilisateur(author));
-            stats.get(author).commitAdd(adds, del, files, date);
-        }
+            if (stats.get(author).getLastCommitDate().equals("")) {
+        stats.get(author).setLastCommitDate(date);
+    }
+    
+    // On ajoute les autres stats normalement
+    stats.get(author).setCommitCount(stats.get(author).getCommitCount() + 1);
+    stats.get(author).setLinesAdded(stats.get(author).getLinesAdded() + adds);
+    stats.get(author).setLinesDeleted(stats.get(author).getLinesDeleted() + del);
+    stats.get(author).setFilesModified(stats.get(author).getFilesModified() + files);
+}
 
         df.close();
         git.close();

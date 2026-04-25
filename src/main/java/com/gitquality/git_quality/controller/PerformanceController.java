@@ -21,28 +21,30 @@ public class PerformanceController {
         this.performanceService = performanceService;
     }
 
-    @PostMapping("/analyze-local")
-    public ResponseEntity<?> analyzeLocalRepo(@RequestParam String path) {
-        try {
-            GitAnalyseur engine = new GitAnalyseur();
-            Map<String, StatUtilisateur> results = engine.analyser(path);
+   @PostMapping("/analyze-local")
+public ResponseEntity<?> analyzeLocalRepo(@RequestParam String path) {
+    try {
+        // 🟢 ÉTAPE 1 : Vider les anciennes stats pour que le dashboard soit frais
+        performanceService.clearAllData();
 
-            for (StatUtilisateur s : results.values()) {
-                performanceService.processGitData(
-                    s.getAuthor(),
-                    s.getCommitCount(),
-                    s.getLinesAdded(),
-                    s.getLinesDeleted(),
-                    s.getFilesModified(),
-                    s.getLastCommitDate()
-                );
-            }
-            return ResponseEntity.ok("Analyse Git réussie pour le chemin : " + path);
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body("Erreur lors de l'analyse : " + e.getMessage());
+        GitAnalyseur engine = new GitAnalyseur();
+        Map<String, StatUtilisateur> results = engine.analyser(path);
+
+        for (StatUtilisateur s : results.values()) {
+            performanceService.processGitData(
+                s.getAuthor(),
+                s.getCommitCount(),
+                s.getLinesAdded(),
+                s.getLinesDeleted(),
+                s.getFilesModified(),
+                s.getLastCommitDate()
+            );
         }
+        return ResponseEntity.ok("Analyse réussie !");
+    } catch (Exception e) {
+        return ResponseEntity.status(500).body("Erreur : " + e.getMessage());
     }
-
+}
     @PostMapping("/sync-git")
     public ResponseEntity<MemberPerformance> sync(@RequestBody MemberPerformance req) {
         MemberPerformance updated = performanceService.processGitData(

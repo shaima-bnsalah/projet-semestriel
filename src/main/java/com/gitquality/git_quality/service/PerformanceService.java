@@ -30,17 +30,28 @@ public class PerformanceService {
         MemberPerformance existingPerf = perfTree.search(author);
         String today = java.time.LocalDate.now().toString();
         
-        // On calcule le score basé sur les chiffres reçus (qui sont des totaux)
-        double newScore = (totalCommits * 10.0) + (totalFiles * 5.0) + (totalAdded * 0.1) - (totalDeleted * 0.05);
-        String newRank = (newScore > 500) ? "EXPERT" : (newScore > 200) ? "PRO" : "JUNIOR";
+        // ══ ALGORITHME DE SCORE STRICT SUR 20 ══
+        double commitPoints = Math.min(8.0, totalCommits * 0.2);       // Max 8 pts (40 commits)
+        double linePoints   = Math.min(8.0, totalAdded * 0.002);       // Max 8 pts (4000 lignes)
+        double filePoints   = Math.min(4.0, totalFiles * 0.2);         // Max 4 pts (20 fichiers)
+        double penalty      = totalDeleted * 0.001;                    // Malus léger
+
+        double finalNote = commitPoints + linePoints + filePoints - penalty;
+
+        // Bornage entre 0 et 20
+        if (finalNote < 0) finalNote = 0;
+        if (finalNote > 20) finalNote = 20;
+
+        // Arrondi à 2 décimales (ex: 15.75)
+        double newScore = Math.round(finalNote * 100.0) / 100.0;
+        
+        // Nouveaux Rangs basés sur 20
+        String newRank = (newScore >= 16) ? "EXPERT" : (newScore >= 10) ? "PRO" : "JUNIOR";
 
         if (existingPerf != null) {
-            // 🟢 CALCUL DE LA DIFFÉRENCE POUR L'HISTORIQUE DU JOUR
-            // Si le score a augmenté depuis la dernière analyse, on enregistre la progression
             double scoreDifference = newScore - existingPerf.getScore();
             int linesDifference = totalAdded - existingPerf.getLinesAdded();
 
-            // 🟢 MISE À JOUR : On REMPLACE les anciennes valeurs par les nouvelles (on n'ajoute plus)
             existingPerf.setCommitCount(totalCommits);
             existingPerf.setLinesAdded(totalAdded);
             existingPerf.setLinesDeleted(totalDeleted);
@@ -49,7 +60,6 @@ public class PerformanceService {
             existingPerf.setScore(newScore);
             existingPerf.setRank(newRank);
 
-            // On ne met à jour l'historique que s'il y a eu un changement réel
             if (scoreDifference > 0 || linesDifference > 0) {
                 updateHistory(existingPerf, today, linesDifference, scoreDifference);
             }
@@ -58,7 +68,6 @@ public class PerformanceService {
             return existingPerf;
 
         } else {
-            // 🔵 PREMIÈRE FOIS : Création normale
             MemberPerformance newPerf = new MemberPerformance(author, totalCommits, totalAdded, totalDeleted, totalFiles, lastDate, newScore, newRank, new ArrayList<>());
             updateHistory(newPerf, today, totalAdded, newScore);
             perfTree.insert(author, newPerf);
@@ -67,17 +76,22 @@ public class PerformanceService {
         }
     }
 
+    public void clearAllData() {
+        this.perfTree = new BTree<>();
+        File file = new File(FILE_PATH);
+        if (file.exists()) file.delete();
+        System.out.println(">>> Toutes les données précédentes ont été effacées.");
+    }
+
     private void updateHistory(MemberPerformance perf, String date, int linesDiff, double scoreDiff) {
         DailyActivity todayActivity = perf.getHistory().stream()
                 .filter(a -> a.getDate().equals(date))
                 .findFirst().orElse(null);
 
         if (todayActivity != null) {
-            // On ajoute la différence au jour actuel
             todayActivity.setLinesAdded(todayActivity.getLinesAdded() + linesDiff);
-            todayActivity.setDailyScore(todayActivity.getDailyScore() + scoreDiff);
+            todayActivity.setDailyScore(Math.round((todayActivity.getDailyScore() + scoreDiff) * 100.0) / 100.0);
         } else {
-            // Nouveau jour
             perf.getHistory().add(new DailyActivity(date, 1, linesDiff, scoreDiff));
         }
     }

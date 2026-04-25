@@ -21,11 +21,14 @@ public class StatUtilisateur {
         this.lastCommitDate = "";
     }
 
-    public void commitAdd(int added, int deleted, int files, String date) {
-        this.commitCount++;
-        this.linesAdded += added;
-        this.linesDeleted += deleted;
-        this.filesModified += files;
+   public void commitAdd(int added, int deleted, int files, String date) {
+    this.commitCount++;
+    this.linesAdded += added;
+    this.linesDeleted += deleted;
+    this.filesModified += files;
+    
+    if (this.lastCommitDate == null || this.lastCommitDate.isEmpty()) {
         this.lastCommitDate = date;
     }
+}
 }
