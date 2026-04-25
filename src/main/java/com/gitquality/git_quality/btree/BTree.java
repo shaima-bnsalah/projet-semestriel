@@ -1,97 +1,105 @@
 package com.gitquality.git_quality.btree;
-import org.springframework.stereotype.Component;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-@Component
-public class BTree<K extends Comparable<K>, V> {
+public class BTree<K extends Comparable<K>, V> implements Serializable {
+    private static final long serialVersionUID = 1L;
+    private BTreeNode<K, V> root;
+    private final int t;
+    private int size;
 
-    private BTreeNode<K, V> root = new BTreeNode<>();
-    private final int t = 2;
+  public BTree(int t) {
+    this.t = t;
+    this.root = new BTreeNode<>(t, true);
+}
+public BTree() {
+    this(3); 
+}
+
 
     public void insert(K key, V value) {
         BTreeNode<K, V> r = root;
-        if (r.keys.size() == 2 * t - 1) {
-            BTreeNode<K, V> newRoot = new BTreeNode<>();
-            newRoot.isLeaf = false;
-            newRoot.children.add(root);
-            splitChild(newRoot, 0);
-            root = newRoot;
+        if (r.keyCount == 2 * t - 1) {
+            BTreeNode<K, V> s = new BTreeNode<>(t, false);
+            root = s;
+            s.children[0] = r;
+            splitChild(s, 0, r);
+            insertNonFull(s, key, value);
+        } else {
+            insertNonFull(r, key, value);
         }
-        insertNonFull(root, key, value);
+        size++;
+    }
+
+    private void insertNonFull(BTreeNode<K, V> x, K key, V value) {
+        int i = x.keyCount - 1;
+        if (x.isLeaf) {
+            while (i >= 0 && key.compareTo(x.keys[i]) < 0) {
+                x.keys[i + 1] = x.keys[i];
+                x.values[i + 1] = x.values[i];
+                i--;
+            }
+            x.keys[i + 1] = key;
+            x.values[i + 1] = value;
+            x.keyCount++;
+        } else {
+            while (i >= 0 && key.compareTo(x.keys[i]) < 0) i--;
+            i++;
+            if (x.children[i].keyCount == 2 * t - 1) {
+                splitChild(x, i, x.children[i]);
+                if (key.compareTo(x.keys[i]) > 0) i++;
+            }
+            insertNonFull(x.children[i], key, value);
+        }
+    }
+
+    private void splitChild(BTreeNode<K, V> x, int i, BTreeNode<K, V> y) {
+        BTreeNode<K, V> z = new BTreeNode<>(t, y.isLeaf);
+        z.keyCount = t - 1;
+        for (int j = 0; j < t - 1; j++) {
+            z.keys[j] = y.keys[j + t];
+            z.values[j] = y.values[j + t];
+        }
+        if (!y.isLeaf) {
+            for (int j = 0; j < t; j++) z.children[j] = y.children[j + t];
+        }
+        y.keyCount = t - 1;
+        for (int j = x.keyCount; j >= i + 1; j--) x.children[j + 1] = x.children[j];
+        x.children[i + 1] = z;
+        for (int j = x.keyCount - 1; j >= i; j--) {
+            x.keys[j + 1] = x.keys[j];
+            x.values[j + 1] = x.values[j];
+        }
+        x.keys[i] = y.keys[t - 1];
+        x.values[i] = y.values[t - 1];
+        x.keyCount++;
     }
 
     public V search(K key) {
-        return searchNode(root, key);
+        return search(root, key);
+    }
+
+    private V search(BTreeNode<K, V> x, K key) {
+        int i = 0;
+        while (i < x.keyCount && key.compareTo(x.keys[i]) > 0) i++;
+        if (i < x.keyCount && key.equals(x.keys[i])) return x.values[i];
+        if (x.isLeaf) return null;
+        return search(x.children[i], key);
     }
 
     public List<V> getAll() {
-        List<V> result = new ArrayList<>();
-        traverseAll(root, result);
-        return result;
+        List<V> list = new ArrayList<>();
+        traverse(root, list);
+        return list;
     }
 
-    private void insertNonFull(BTreeNode<K, V> node, K key, V value) {
-        int i = node.keys.size() - 1;
-        if (node.isLeaf) {
-            node.keys.add(null);
-            node.values.add(null);
-            while (i >= 0 && key.compareTo(node.keys.get(i)) < 0) {
-                node.keys.set(i + 1, node.keys.get(i));
-                node.values.set(i + 1, node.values.get(i));
-                i--;
-            }
-            node.keys.set(i + 1, key);
-            node.values.set(i + 1, value);
-        } else {
-            while (i >= 0 && key.compareTo(node.keys.get(i)) < 0) i--;
-            i++;
-            if (node.children.get(i).keys.size() == 2 * t - 1) {
-                splitChild(node, i);
-                if (key.compareTo(node.keys.get(i)) > 0) i++;
-            }
-            insertNonFull(node.children.get(i), key, value);
+    private void traverse(BTreeNode<K, V> x, List<V> list) {
+        int i;
+        for (i = 0; i < x.keyCount; i++) {
+            if (!x.isLeaf) traverse(x.children[i], list);
+            list.add(x.values[i]);
         }
-    }
-
-    private void splitChild(BTreeNode<K, V> parent, int i) {
-        BTreeNode<K, V> full = parent.children.get(i);
-        BTreeNode<K, V> newNode = new BTreeNode<>();
-        newNode.isLeaf = full.isLeaf;
-
-        parent.keys.add(i, full.keys.get(t - 1));
-        parent.values.add(i, full.values.get(t - 1));
-        parent.children.add(i + 1, newNode);
-
-        newNode.keys.addAll(full.keys.subList(t, full.keys.size()));
-        newNode.values.addAll(full.values.subList(t, full.values.size()));
-        full.keys.subList(t - 1, full.keys.size()).clear();
-        full.values.subList(t - 1, full.values.size()).clear();
-
-        if (!full.isLeaf) {
-            newNode.children.addAll(
-                full.children.subList(t, full.children.size())
-            );
-            full.children.subList(t, full.children.size()).clear();
-        }
-    }
-
-    private V searchNode(BTreeNode<K, V> node, K key) {
-        int i = 0;
-        while (i < node.keys.size() && key.compareTo(node.keys.get(i)) > 0) i++;
-        if (i < node.keys.size() && key.compareTo(node.keys.get(i)) == 0)
-            return node.values.get(i);
-        if (node.isLeaf) return null;
-        return searchNode(node.children.get(i), key);
-    }
-
-    private void traverseAll(BTreeNode<K, V> node, List<V> result) {
-        for (int i = 0; i < node.keys.size(); i++) {
-            if (!node.isLeaf)
-                traverseAll(node.children.get(i), result);
-            result.add(node.values.get(i));
-        }
-        if (!node.isLeaf)
-            traverseAll(node.children.get(node.children.size() - 1), result);
+        if (!x.isLeaf) traverse(x.children[i], list);
     }
 }

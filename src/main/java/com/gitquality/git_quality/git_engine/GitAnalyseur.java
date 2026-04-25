@@ -20,13 +20,22 @@ public class GitAnalyseur {
         Map<String, StatUtilisateur> stats = new HashMap<>();
         Git git;
 
-        // Gérer les repos distants ou locaux
+        // 1. GESTION DU CHEMIN (DISTANT OU LOCAL)
         if (repoPath.startsWith("http") || repoPath.startsWith("git@")) {
-            File tempDir = new File(System.getProperty("java.io.tmpdir"), "git-stats-temp");
-            if (tempDir.exists()) deleteFolder(tempDir);
-            git = Git.cloneRepository().setURI(repoPath).setDirectory(tempDir).call();
+            // Cas GitHub : On clone dans un dossier unique
+            String uniqueFolderName = "git-stats-" + System.currentTimeMillis();
+            File tempDir = new File(System.getProperty("java.io.tmpdir"), uniqueFolderName);
+            
+            git = Git.cloneRepository()
+                    .setURI(repoPath)
+                    .setDirectory(tempDir)
+                    .setCloneAllBranches(true) // 🟢 Scanne toutes les branches des amies
+                    .call();
+            System.out.println(">>> Clone GitHub réussi dans : " + tempDir.getAbsolutePath());
         } else {
+            // Cas Local : On ouvre le dossier .git sur ton PC
             git = Git.open(new File(repoPath));
+            System.out.println(">>> Ouverture du dépôt local réussie.");
         }
 
         Repository repo = git.getRepository();
@@ -35,6 +44,8 @@ public class GitAnalyseur {
         df.setDetectRenames(true);
 
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        
+        // 2. LECTURE DE TOUS LES COMMITS (TOUTES LES BRANCHES)
         Iterable<RevCommit> commits = git.log().all().call();
 
         for (RevCommit commit : commits) {
