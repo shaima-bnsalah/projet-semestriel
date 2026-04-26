@@ -1,15 +1,14 @@
 package com.gitquality.git_quality.model;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.io.Serializable; 
 import java.util.ArrayList;
 import java.util.List;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class MemberPerformance {
+@Data @AllArgsConstructor @NoArgsConstructor
+public class MemberPerformance implements Serializable { 
+    private static final long serialVersionUID = 1L;
     private String author;
     private int commitCount;
     private int linesAdded;

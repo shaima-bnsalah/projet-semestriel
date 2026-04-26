@@ -1,21 +1,10 @@
 package com.gitquality.git_quality.service;
 
 import com.gitquality.git_quality.btree.BTree;
-import com.gitquality.git_quality.model.CommitInfo;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+import java.io.*;
 
-public class BTreePersistence {
-
-    private static final int BUFFER_SIZE = 64 * 1024;
+public class BTreePersistence<V extends Serializable> {
 
     private final String filePath;
 
@@ -23,40 +12,30 @@ public class BTreePersistence {
         this.filePath = filePath;
     }
 
-    public void save(BTree<String, CommitInfo> tree) throws IOException {
-        Path target = Paths.get(filePath);
-        Path tmp    = Paths.get(filePath + ".tmp");
 
+    public void save(BTree<V> tree) throws IOException {
         try (ObjectOutputStream oos = new ObjectOutputStream(
-                new BufferedOutputStream(
-                        Files.newOutputStream(tmp), BUFFER_SIZE))) {
+                new BufferedOutputStream(new FileOutputStream(filePath)))) {
             oos.writeObject(tree);
-        }
-
-        try {
-            Files.move(tmp, target,
-                    StandardCopyOption.REPLACE_EXISTING,
-                    StandardCopyOption.ATOMIC_MOVE);
-        } catch (IOException atomicFail) {
-            Files.move(tmp, target, StandardCopyOption.REPLACE_EXISTING);
         }
         System.out.println("[Saved] Tree written to " + filePath);
     }
 
+
     @SuppressWarnings("unchecked")
-    public BTree<String, CommitInfo> load() throws IOException, ClassNotFoundException {
-        Path p = Paths.get(filePath);
-        if (!Files.exists(p)) return null;
+    public BTree<V> load() throws IOException, ClassNotFoundException {
+        File f = new File(filePath);
+        if (!f.exists()) return null;
         try (ObjectInputStream ois = new ObjectInputStream(
-                new BufferedInputStream(
-                        Files.newInputStream(p), BUFFER_SIZE))) {
-            return (BTree<String, CommitInfo>) ois.readObject();
+                new BufferedInputStream(new FileInputStream(f)))) {
+            return (BTree<V>) ois.readObject();
         }
     }
 
-    public BTree<String, CommitInfo> loadOrCreate(int degree) {
+
+    public BTree<V> loadOrCreate(int degree) {
         try {
-            BTree<String, CommitInfo> loaded = load();
+            BTree<V> loaded = load();
             if (loaded != null) {
                 System.out.println("[Loaded] Restored tree from disk.");
                 return loaded;

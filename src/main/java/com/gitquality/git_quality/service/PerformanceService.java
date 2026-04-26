@@ -16,7 +16,7 @@ import java.util.List;
 @Service
 public class PerformanceService {
 
-    private BTree<String, MemberPerformance> perfTree = new BTree<>();
+    private BTree<MemberPerformance> perfTree = new BTree<>(3);
     private final ObjectMapper objectMapper = new ObjectMapper();
     private static final String FILE_PATH = "performance_data.json";
 
@@ -30,22 +30,16 @@ public class PerformanceService {
         MemberPerformance existingPerf = perfTree.search(author);
         String today = java.time.LocalDate.now().toString();
         
-        // ══ ALGORITHME DE SCORE STRICT SUR 20 ══
-        double commitPoints = Math.min(8.0, totalCommits * 0.2);       // Max 8 pts (40 commits)
-        double linePoints   = Math.min(8.0, totalAdded * 0.002);       // Max 8 pts (4000 lignes)
-        double filePoints   = Math.min(4.0, totalFiles * 0.2);         // Max 4 pts (20 fichiers)
-        double penalty      = totalDeleted * 0.001;                    // Malus léger
+        double commitPoints = Math.min(8.0, totalCommits * 0.2);
+        double linePoints   = Math.min(8.0, totalAdded * 0.002);
+        double filePoints   = Math.min(4.0, totalFiles * 0.2);
+        double penalty      = totalDeleted * 0.001;
 
         double finalNote = commitPoints + linePoints + filePoints - penalty;
-
-        // Bornage entre 0 et 20
         if (finalNote < 0) finalNote = 0;
         if (finalNote > 20) finalNote = 20;
 
-        // Arrondi à 2 décimales (ex: 15.75)
         double newScore = Math.round(finalNote * 100.0) / 100.0;
-        
-        // Nouveaux Rangs basés sur 20
         String newRank = (newScore >= 16) ? "EXPERT" : (newScore >= 10) ? "PRO" : "JUNIOR";
 
         if (existingPerf != null) {
@@ -77,10 +71,9 @@ public class PerformanceService {
     }
 
     public void clearAllData() {
-        this.perfTree = new BTree<>();
+        this.perfTree = new BTree<>(3);
         File file = new File(FILE_PATH);
         if (file.exists()) file.delete();
-        System.out.println(">>> Toutes les données précédentes ont été effacées.");
     }
 
     private void updateHistory(MemberPerformance perf, String date, int linesDiff, double scoreDiff) {
@@ -113,7 +106,7 @@ public class PerformanceService {
         if (file.exists()) {
             try {
                 List<MemberPerformance> list = objectMapper.readValue(file, new TypeReference<List<MemberPerformance>>() {});
-                this.perfTree = new BTree<>(); 
+                this.perfTree = new BTree<>(3); 
                 for (MemberPerformance p : list) {
                     perfTree.insert(p.getAuthor(), p);
                 }
