@@ -10,14 +10,13 @@ import java.util.List;
 @Data @AllArgsConstructor @NoArgsConstructor
 public class MemberPerformance implements Serializable {
     private static final long serialVersionUID = 1L;
-    private String author;          // 1
-    private int commitCount;        // 2
-    private int linesAdded;         // 3
-    private int linesDeleted;       // 4
-    private int filesModified;      // 5
-    private String lastCommitDate;  // 6
-    private double score;           // 7
-    private String rank;            // 8
-    private List<DailyActivity> history = new ArrayList<>(); // 9
-    private String branchName;      // 10 🟢
+    private String author;          
+    private int commitCount;        
+    private int linesAdded;         
+    private int linesDeleted;       
+    private int filesModified;      
+    private String lastCommitDate;  
+    private double score;           
+    private String rank;            
+    private List<DailyActivity> history = new ArrayList<>(); 
 }

@@ -23,18 +23,17 @@ function CommitsTable({ members }) {
       (m.history || []).flatMap(h => 
         (h.commitMessages || [`Update ${h.date}`]).map(msg => ({
           author: m.author,
-          date: h.date,
+          date: h.date, // Utilise la date réelle de l'historique
           linesAdded: Math.round(h.linesAdded / (h.commitMessages?.length || 1)),
           linesDeleted: h.linesDeleted || 0,
           score: h.dailyScore,
-          message: msg,
-          repo: m.branchName || "main" // 🟢 Affiche la vraie branche du backend
+          message: msg
         }))
       )
     ).filter(c => {
       const ms = c.author.toLowerCase().includes(search.toLowerCase());
-      const mf = !dateFrom || c.date >= dateFrom; // 📅 Filtre date début
-      const mt = !dateTo || c.date <= dateTo;     // 📅 Filtre date fin
+      const mf = !dateFrom || c.date >= dateFrom;
+      const mt = !dateTo || c.date <= dateTo;
       const mm = !filterMember || c.author === filterMember;
       return ms && mf && mt && mm;
     }).sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -68,7 +67,7 @@ function CommitsTable({ members }) {
       <table className="ct">
         <thead>
           <tr>
-            <th>Auteur</th><th>Message</th><th>Branche</th>
+            <th>Auteur</th><th>Message</th>
             <th>Lignes +</th><th>Lignes -</th><th>Date</th><th>Activité</th>
           </tr>
         </thead>
@@ -84,7 +83,6 @@ function CommitsTable({ members }) {
                   </div>
                 </td>
                 <td className="ct-msg">{c.message}</td>
-                <td><span className="ct-repo">{c.repo}</span></td>
                 <td className="ct-add">+{c.linesAdded}</td>
                 <td className="ct-del">-{c.linesDeleted}</td>
                 <td className="ct-date-cell">{c.date}</td>
@@ -110,7 +108,7 @@ function ActivitySummary({ member, members }) {
         <div className="act-card">
           <div className="act-ico" style={{background:"rgba(59,110,246,.15)"}}>📅</div>
           <div className="act-val">{member.history?.[member.history.length-1]?.commits || 0}</div>
-          <div className="act-lbl">Commits aujourd'hui</div>
+          <div className="act-lbl">Commits session</div>
         </div>
         <div className="act-card">
           <div className="act-ico" style={{background:"rgba(251,191,36,.12)"}}>🏆</div>
@@ -151,8 +149,6 @@ export default function Dashboard() {
   const avgScore     = (members.reduce((s,m)=>s+m.score,0)/members.length).toFixed(1);
   const m   = selected||members[0];
   const ci  = members.indexOf(m);
-  const activeDays  = (m.history||[]).length;
-  const bestCommits = (m.history||[]).reduce((b,h)=>(h.commits||0)>b?(h.commits||0):b, 0);
 
   const scoreQuality = m.score >= 16 ? "Excellent" : m.score >= 10 ? "Très bon" : "Moyen";
 
@@ -207,7 +203,7 @@ export default function Dashboard() {
             <div className={`hero-av ${AV_CLS[ci%AV_CLS.length]}`}>{initials(m.author)}</div>
             <div className="hero-body">
               <div className="hero-name">{m.author}</div>
-              <div className="hero-sub">Dernière activité : {m.lastCommitDate} | Branche : {m.branchName}</div>
+              <div className="hero-sub">Dernière activité : {m.lastCommitDate}</div>
               <div className="hero-kpis">
                 <div className="kpi"><div className="kpi-v">{m.commitCount}</div><div className="kpi-l">COMMITS</div></div>
                 <div className="kpi"><div className="kpi-v">+{m.linesAdded}</div><div className="kpi-l">LIGNES</div></div>

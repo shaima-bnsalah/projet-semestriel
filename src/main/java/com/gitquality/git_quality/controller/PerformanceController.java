@@ -21,30 +21,28 @@ public class PerformanceController {
     }
 
     @PostMapping("/analyze-local")
-    public ResponseEntity<?> analyze(@RequestParam String path) {
-        try {
-            performanceService.clearAllData();
-            GitAnalyseur engine = new GitAnalyseur();
-            Map<String, StatUtilisateur> results = engine.analyser(path);
+public ResponseEntity<?> analyze(@RequestParam String path) {
+    try {
+        performanceService.clearAllData();
+        GitAnalyseur engine = new GitAnalyseur();
+        Map<String, StatUtilisateur> results = engine.analyser(path);
 
-            for (StatUtilisateur s : results.values()) {
-                // 🟢 Appel avec tous les nouveaux paramètres synchronisés
-                performanceService.processGitData(
-                    s.getAuthor(),
-                    s.getCommitCount(),
-                    s.getLinesAdded(),
-                    s.getLinesDeleted(),
-                    s.getFilesModified(),
-                    s.getLastCommitDate(),
-                    s.getMessages(),
-                    s.getBranchName() 
-                );
-            }
-            return ResponseEntity.ok("Analyse réussie !");
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body("Erreur : " + e.getMessage());
+        for (StatUtilisateur s : results.values()) {
+            // ✅ Correction : On envoie bien s.getDailyStats()
+            performanceService.processGitData(
+                s.getAuthor(),
+                s.getCommitCount(),
+                s.getLinesAdded(),
+                s.getLinesDeleted(),
+                s.getFilesModified(),
+                s.getDailyStats() 
+            );
         }
+        return ResponseEntity.ok("Analyse réussie !");
+    } catch (Exception e) {
+        return ResponseEntity.status(500).body("Erreur : " + e.getMessage());
     }
+}
 
     @GetMapping("/leaderboard")
     public ResponseEntity<List<MemberPerformance>> getLeaderboard() {

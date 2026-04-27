@@ -8,12 +8,11 @@ import java.util.List;
 
 @Data @AllArgsConstructor @NoArgsConstructor
 public class DailyActivity implements Serializable {
-    private static final long serialVersionUID = 1L;
     private String date;
     private int commits;
     private int linesAdded;
     private int linesDeleted;
     private double dailyScore;
-    // 🟢 Nouveau : Liste des messages pour le tableau
     private List<String> commitMessages = new ArrayList<>(); 
+    private String branchName; // 🟢 AJOUTER CECI
 }
