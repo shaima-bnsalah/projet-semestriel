@@ -3,7 +3,7 @@ import SignIn from "./signin/SignIn";
 import Search from "./search/Search";
 import SignUp from "./signup/singup";
 import Teamdashbord from "./TeamDashbord/Dashbord";
-
+import AllCommits from "./TeamDashbord/AllCommits";
 function App() {
   return (
     <BrowserRouter>
@@ -13,6 +13,7 @@ function App() {
         <Route path="/signup" element={<SignUp />} />
         <Route path="/search" element={<Search />} />
         <Route path="/dashboard" element={<Teamdashbord />} />
+        <Route path="/all-commits" element={<AllCommits />} />
       </Routes>
     </BrowserRouter>
   );

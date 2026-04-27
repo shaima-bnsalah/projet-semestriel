@@ -1,5 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
-,::before,*::after{margin:0;padding:0;box-sizing:border-box}
+::before,*::after{margin:0;padding:0;box-sizing:border-box}
 :root{
   --bg:#07111f;--surface:#0d1b2e;--s2:#112240;
   --border:#1e3a5f;--border2:#2a4f7a;
