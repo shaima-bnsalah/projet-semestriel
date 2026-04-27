@@ -9,10 +9,16 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class Commit {
     private String hash;
-    private int userId;
+    private int userId;      // 🟢 Vérifie que cette ligne est bien là
     private String author;
     private String date;
-    private int added;
-    private int deleted;
-    private int files;
+    private int linesAdded;
+    private int linesDeleted;
+    private int filesModified;
+    private String message;
+
+    // Si Lombok ne fonctionne pas sur ton PC, ajoute ceci manuellement :
+    public int getUserId() {
+        return userId;
+    }
 }

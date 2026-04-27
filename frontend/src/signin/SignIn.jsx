@@ -67,12 +67,15 @@ export default function SignIn() {
             </div>
             <div className="gt-field">
               <input className={`gt-input${error ? " error" : ""}`} type={showPwd ? "text" : "password"} placeholder="Mot de passe" value={pwd} onChange={(e) => setPwd(e.target.value)} />
-              <span className="gt-eye" onClick={() => setShowPwd((v) => !v)}>👁</span>
+        
             </div>
           </div>
 
           <div className="gt-row">
-            <label><input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} /><span>Rester connecté</span></label>
+           <label style={{display:'flex', alignItems:'center', gap:'10px'}}>
+  <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
+  <span>Rester connecté</span>
+</label>
             <span className="gt-forgot" style={{cursor:'pointer'}}>Mot de passe oublié ?</span>
           </div>
 
@@ -84,7 +87,7 @@ export default function SignIn() {
           <button className="gt-gh" disabled={loading}><GithubIcon /> Continuer avec GitHub</button>
           
           <div className="gt-foot">
-            Pas encore de compte ? <span onClick={() => navigate("/signup")} style={{ cursor: "pointer", color: "#4f46e5" }}>Créer un compte</span>
+            Pas encore de compte ? <span onClick={() => navigate("/signup")}>Créer un compte</span>
           </div>
         </div>
       </div>

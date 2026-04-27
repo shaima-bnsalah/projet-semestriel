@@ -2,13 +2,12 @@ package com.gitquality.git_quality.controller;
 
 import com.gitquality.git_quality.model.MemberPerformance;
 import com.gitquality.git_quality.service.PerformanceService;
-import com.gitquality.git_quality.git_engine.GitAnalyseur; // 🟢 Import du moteur
-import com.gitquality.git_quality.git_engine.StatUtilisateur; // 🟢 Import du modèle de P1
+import com.gitquality.git_quality.git_engine.GitAnalyseur;
+import com.gitquality.git_quality.git_engine.StatUtilisateur;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 import java.util.Map;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/performance")
@@ -21,41 +20,30 @@ public class PerformanceController {
         this.performanceService = performanceService;
     }
 
-   @PostMapping("/analyze-local")
-public ResponseEntity<?> analyzeLocalRepo(@RequestParam String path) {
-    try {
-        // 🟢 ÉTAPE 1 : Vider les anciennes stats pour que le dashboard soit frais
-        performanceService.clearAllData();
+    @PostMapping("/analyze-local")
+    public ResponseEntity<?> analyze(@RequestParam String path) {
+        try {
+            performanceService.clearAllData();
+            GitAnalyseur engine = new GitAnalyseur();
+            Map<String, StatUtilisateur> results = engine.analyser(path);
 
-        GitAnalyseur engine = new GitAnalyseur();
-        Map<String, StatUtilisateur> results = engine.analyser(path);
-
-        for (StatUtilisateur s : results.values()) {
-            performanceService.processGitData(
-                s.getAuthor(),
-                s.getCommitCount(),
-                s.getLinesAdded(),
-                s.getLinesDeleted(),
-                s.getFilesModified(),
-                s.getLastCommitDate()
-            );
+            for (StatUtilisateur s : results.values()) {
+                // 🟢 Appel avec tous les nouveaux paramètres synchronisés
+                performanceService.processGitData(
+                    s.getAuthor(),
+                    s.getCommitCount(),
+                    s.getLinesAdded(),
+                    s.getLinesDeleted(),
+                    s.getFilesModified(),
+                    s.getLastCommitDate(),
+                    s.getMessages(),
+                    s.getBranchName() 
+                );
+            }
+            return ResponseEntity.ok("Analyse réussie !");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Erreur : " + e.getMessage());
         }
-        return ResponseEntity.ok("Analyse réussie !");
-    } catch (Exception e) {
-        return ResponseEntity.status(500).body("Erreur : " + e.getMessage());
-    }
-}
-    @PostMapping("/sync-git")
-    public ResponseEntity<MemberPerformance> sync(@RequestBody MemberPerformance req) {
-        MemberPerformance updated = performanceService.processGitData(
-            req.getAuthor(),
-            req.getCommitCount(),
-            req.getLinesAdded(),
-            req.getLinesDeleted(),
-            req.getFilesModified(),
-            req.getLastCommitDate()
-        );
-        return ResponseEntity.ok(updated);
     }
 
     @GetMapping("/leaderboard")

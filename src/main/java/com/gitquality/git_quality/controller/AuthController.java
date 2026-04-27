@@ -60,15 +60,7 @@ public class AuthController {
         }
     }
 
-    @DeleteMapping("/delete")
-    public ResponseEntity<?> deleteAccount(@RequestParam String email) {
-        try {
-            authService.deleteUser(email);
-            return ResponseEntity.ok("Compte supprimé avec succès !");
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
+  
     @PostMapping("/verify-email")
 public ResponseEntity<?> verifyEmail(@RequestBody VerifyRequest req) {
     try {

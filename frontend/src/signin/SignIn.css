@@ -193,7 +193,8 @@
 .gt-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;  
+  gap: 20px;               
   margin: 16px 0 22px;
   font-size: 13px;
 }
@@ -251,12 +252,28 @@
   stroke: #fff;
   stroke-width: 2;
 }
-
 .gt-div {
   display: flex;
   align-items: center;
   gap: 12px;
   margin-bottom: 18px;
+  width: 100%;
+  position: relative;
+}
+
+.gt-div::before,
+.gt-div::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.gt-div span {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.25);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
 }
 .gt-div-line {
   flex: 1;
@@ -311,10 +328,14 @@
   letter-spacing: 0.02em;
 }
 
-.gt-foot a {
+.gt-foot span {
   color: #4d9fff;
   cursor: pointer;
   font-weight: 500;
+}
+
+.gt-foot span:hover { 
+  text-decoration: underline; 
 }
 
 .gt-foot a:hover { text-decoration: underline; }

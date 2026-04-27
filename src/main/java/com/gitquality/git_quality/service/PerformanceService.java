@@ -7,7 +7,6 @@ import com.gitquality.git_quality.model.MemberPerformance;
 import com.gitquality.git_quality.model.DailyActivity; 
 import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Service;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -21,98 +20,79 @@ public class PerformanceService {
     private static final String FILE_PATH = "performance_data.json";
 
     @PostConstruct
-    public void init() {
-        loadData();
-    }
+    public void init() { loadData(); }
 
-    public MemberPerformance processGitData(String author, int totalCommits, int totalAdded, int totalDeleted, int totalFiles, String lastDate) {
+    public MemberPerformance processGitData(String author, int totalCommits, int totalAdded, int totalDeleted, int totalFiles, String lastDate, List<String> messages, String branchName) {
         
         MemberPerformance existingPerf = perfTree.search(author);
         String today = java.time.LocalDate.now().toString();
         
-        double commitPoints = Math.min(8.0, totalCommits * 0.2);
-        double linePoints   = Math.min(8.0, totalAdded * 0.002);
-        double filePoints   = Math.min(4.0, totalFiles * 0.2);
-        double penalty      = totalDeleted * 0.001;
+        // ALGORITHME SUR 20
+        double commitPts = Math.min(8.0, totalCommits * 0.2);
+        double linePts   = Math.min(8.0, totalAdded * 0.002);
+        double filePts   = Math.min(4.0, totalFiles * 0.2);
+        double penalty   = totalDeleted * 0.001;
+        double score20   = Math.max(0, Math.min(20, commitPts + linePts + filePts - penalty));
+        double newScore  = Math.round(score20 * 100.0) / 100.0;
+        String newRank   = (newScore >= 16) ? "EXPERT" : (newScore >= 10) ? "PRO" : "JUNIOR";
 
-        double finalNote = commitPoints + linePoints + filePoints - penalty;
-        if (finalNote < 0) finalNote = 0;
-        if (finalNote > 20) finalNote = 20;
+        if (existingPerf == null) {
+            // 🟢 CORRECTION ICI : Ajout du 10ème paramètre "branchName"
+            existingPerf = new MemberPerformance(author, 0, 0, 0, 0, lastDate, 0.0, "JUNIOR", new ArrayList<>(), branchName);
+        }
 
-        double newScore = Math.round(finalNote * 100.0) / 100.0;
-        String newRank = (newScore >= 16) ? "EXPERT" : (newScore >= 10) ? "PRO" : "JUNIOR";
+        int linesDiff = totalAdded - existingPerf.getLinesAdded();
+        int delDiff   = totalDeleted - existingPerf.getLinesDeleted();
+        double scoreDiff = newScore - existingPerf.getScore();
 
-        if (existingPerf != null) {
-            double scoreDifference = newScore - existingPerf.getScore();
-            int linesDifference = totalAdded - existingPerf.getLinesAdded();
+        existingPerf.setCommitCount(totalCommits);
+        existingPerf.setLinesAdded(totalAdded);
+        existingPerf.setLinesDeleted(totalDeleted);
+        existingPerf.setFilesModified(totalFiles);
+        existingPerf.setLastCommitDate(lastDate);
+        existingPerf.setScore(newScore);
+        existingPerf.setRank(newRank);
+        existingPerf.setBranchName(branchName); // Mise à jour de la branche
 
-            existingPerf.setCommitCount(totalCommits);
-            existingPerf.setLinesAdded(totalAdded);
-            existingPerf.setLinesDeleted(totalDeleted);
-            existingPerf.setFilesModified(totalFiles);
-            existingPerf.setLastCommitDate(lastDate);
-            existingPerf.setScore(newScore);
-            existingPerf.setRank(newRank);
+        updateHistory(existingPerf, today, linesDiff, delDiff, scoreDiff, messages);
+        
+        perfTree.insert(author, existingPerf);
+        saveData();
+        return existingPerf;
+    }
 
-            if (scoreDifference > 0 || linesDifference > 0) {
-                updateHistory(existingPerf, today, linesDifference, scoreDifference);
-            }
-            
-            saveData(); 
-            return existingPerf;
-
+    private void updateHistory(MemberPerformance perf, String date, int linesDiff, int delDiff, double scoreDiff, List<String> msgs) {
+        DailyActivity today = perf.getHistory().stream().filter(a -> a.getDate().equals(date)).findFirst().orElse(null);
+        if (today != null) {
+            today.setLinesAdded(today.getLinesAdded() + linesDiff);
+            today.setLinesDeleted(today.getLinesDeleted() + delDiff);
+            today.setDailyScore(Math.round((today.getDailyScore() + scoreDiff) * 100.0) / 100.0);
+            today.setCommitMessages(msgs);
         } else {
-            MemberPerformance newPerf = new MemberPerformance(author, totalCommits, totalAdded, totalDeleted, totalFiles, lastDate, newScore, newRank, new ArrayList<>());
-            updateHistory(newPerf, today, totalAdded, newScore);
-            perfTree.insert(author, newPerf);
-            saveData(); 
-            return newPerf;
+            perf.getHistory().add(new DailyActivity(date, 1, linesDiff, delDiff, scoreDiff, new ArrayList<>(msgs)));
         }
     }
+
+    public List<MemberPerformance> getLeaderboard() { return perfTree.getAll(); }
 
     public void clearAllData() {
         this.perfTree = new BTree<>(3);
-        File file = new File(FILE_PATH);
-        if (file.exists()) file.delete();
-    }
-
-    private void updateHistory(MemberPerformance perf, String date, int linesDiff, double scoreDiff) {
-        DailyActivity todayActivity = perf.getHistory().stream()
-                .filter(a -> a.getDate().equals(date))
-                .findFirst().orElse(null);
-
-        if (todayActivity != null) {
-            todayActivity.setLinesAdded(todayActivity.getLinesAdded() + linesDiff);
-            todayActivity.setDailyScore(Math.round((todayActivity.getDailyScore() + scoreDiff) * 100.0) / 100.0);
-        } else {
-            perf.getHistory().add(new DailyActivity(date, 1, linesDiff, scoreDiff));
-        }
-    }
-
-    public List<MemberPerformance> getLeaderboard() {
-        return perfTree.getAll();
+        File f = new File(FILE_PATH);
+        if (f.exists()) f.delete();
     }
 
     private void saveData() {
-        try {
-            objectMapper.writeValue(new File(FILE_PATH), perfTree.getAll());
-        } catch (IOException e) {
-            System.err.println("Erreur sauvegarde : " + e.getMessage());
-        }
+        try { objectMapper.writeValue(new File(FILE_PATH), perfTree.getAll()); } catch (IOException e) {}
     }
 
     private void loadData() {
-        File file = new File(FILE_PATH);
-        if (file.exists()) {
+        File f = new File(FILE_PATH);
+        if (f.exists()) {
             try {
-                List<MemberPerformance> list = objectMapper.readValue(file, new TypeReference<List<MemberPerformance>>() {});
-                this.perfTree = new BTree<>(3); 
-                for (MemberPerformance p : list) {
-                    perfTree.insert(p.getAuthor(), p);
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+                List<MemberPerformance> list = objectMapper.readValue(f, new TypeReference<List<MemberPerformance>>() {});
+                this.perfTree = new BTree<>(3);
+                for (MemberPerformance p : list) { perfTree.insert(p.getAuthor(), p); }
+            } catch (IOException e) {}
         }
     }
 }

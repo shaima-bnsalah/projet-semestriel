@@ -1,16 +1,16 @@
 package com.gitquality.git_quality.git_engine;
+import java.util.ArrayList;
+import java.util.List;
 
-import lombok.Data;
-
-@Data
 public class StatUtilisateur {
-    private int userId;
     private String author;
     private int commitCount;
     private int linesAdded;
     private int linesDeleted;
     private int filesModified;
     private String lastCommitDate;
+    private String branchName; // 🟢 AJOUT
+    private List<String> messages = new ArrayList<>(); // 🟢 AJOUT
 
     public StatUtilisateur(String author) {
         this.author = author;
@@ -21,14 +21,26 @@ public class StatUtilisateur {
         this.lastCommitDate = "";
     }
 
-   public void commitAdd(int added, int deleted, int files, String date) {
-    this.commitCount++;
-    this.linesAdded += added;
-    this.linesDeleted += deleted;
-    this.filesModified += files;
-    
-    if (this.lastCommitDate == null || this.lastCommitDate.isEmpty()) {
-        this.lastCommitDate = date;
+    // 🟢 AJOUT : Nouvelle version pour supporter tes graphiques
+    public void commitAdd(int adds, int del, int files, String date, String msg, String branch) {
+        this.commitCount++;
+        this.linesAdded += adds;
+        this.linesDeleted += del;
+        this.filesModified += files;
+        // On garde la date la plus récente (la première rencontrée par JGit)
+        if (this.lastCommitDate.equals("")) {
+            this.lastCommitDate = date;
+            this.branchName = branch;
+        }
+        this.messages.add(msg);
     }
-}
+
+    public String getAuthor() { return author; }
+    public int getCommitCount() { return commitCount; }
+    public int getLinesAdded() { return linesAdded; }
+    public int getLinesDeleted() { return linesDeleted; }
+    public int getFilesModified() { return filesModified; }
+    public String getLastCommitDate() { return lastCommitDate; }
+    public String getBranchName() { return branchName; } // 🟢
+    public List<String> getMessages() { return messages; } // 🟢
 }

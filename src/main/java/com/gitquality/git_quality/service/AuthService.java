@@ -84,16 +84,18 @@ public class AuthService {
         return "Mot de passe mis à jour !";
     }
 
-    // 🟢 MÉTHODE RÉ-AJOUTÉE
     public List<User> getAllUsers() {
         return userTree.getAll();
     }
 
     public void deleteUser(String email) {
-        boolean deleted = userTree.delete(email);
-        if (!deleted) throw new RuntimeException("Utilisateur non trouvé");
-        saveDataToFile();
+    boolean deleted = userTree.delete(email);
+    if (!deleted) {
+        throw new RuntimeException("Utilisateur non trouvé");
     }
+    saveDataToFile();
+    System.out.println(">>> Utilisateur " + email + " supprimé.");
+}
 
     private void saveDataToFile() {
         try { objectMapper.writeValue(new File(FILE_PATH), userTree.getAll()); } catch (IOException e) { e.printStackTrace(); }
