@@ -20,14 +20,19 @@ public class PerformanceService {
     private static final String FILE_PATH = "performance_data.json";
 
     @PostConstruct
-    public void init() { loadData(); }
+    public void init() { 
+        loadData(); 
+    }
 
+    /**
+     * Traite les données Git et met à jour les statistiques.
+     * Correction : On utilise "lastDate" (date du commit) au lieu de la date du jour système.
+     */
     public MemberPerformance processGitData(String author, int totalCommits, int totalAdded, int totalDeleted, int totalFiles, String lastDate, List<String> messages, String branchName) {
         
         MemberPerformance existingPerf = perfTree.search(author);
-        String today = java.time.LocalDate.now().toString();
         
-        // ALGORITHME SUR 20
+        // --- ALGORITHME DE SCORE SUR 20 ---
         double commitPts = Math.min(8.0, totalCommits * 0.2);
         double linePts   = Math.min(8.0, totalAdded * 0.002);
         double filePts   = Math.min(4.0, totalFiles * 0.2);
@@ -36,15 +41,17 @@ public class PerformanceService {
         double newScore  = Math.round(score20 * 100.0) / 100.0;
         String newRank   = (newScore >= 16) ? "EXPERT" : (newScore >= 10) ? "PRO" : "JUNIOR";
 
+        // Si le membre n'existe pas encore, on l'initialise
         if (existingPerf == null) {
-            // 🟢 CORRECTION ICI : Ajout du 10ème paramètre "branchName"
             existingPerf = new MemberPerformance(author, 0, 0, 0, 0, lastDate, 0.0, "JUNIOR", new ArrayList<>(), branchName);
         }
 
+        // Calcul des différences pour l'historique journalier
         int linesDiff = totalAdded - existingPerf.getLinesAdded();
         int delDiff   = totalDeleted - existingPerf.getLinesDeleted();
         double scoreDiff = newScore - existingPerf.getScore();
 
+        // Mise à jour des stats globales
         existingPerf.setCommitCount(totalCommits);
         existingPerf.setLinesAdded(totalAdded);
         existingPerf.setLinesDeleted(totalDeleted);
@@ -52,28 +59,47 @@ public class PerformanceService {
         existingPerf.setLastCommitDate(lastDate);
         existingPerf.setScore(newScore);
         existingPerf.setRank(newRank);
-        existingPerf.setBranchName(branchName); // Mise à jour de la branche
+        existingPerf.setBranchName(branchName);
 
-        updateHistory(existingPerf, today, linesDiff, delDiff, scoreDiff, messages);
+        // ✅ CORRECTION ICI : On passe "lastDate" à updateHistory pour enregistrer la date réelle du commit
+        updateHistory(existingPerf, lastDate, linesDiff, delDiff, scoreDiff, messages);
         
         perfTree.insert(author, existingPerf);
         saveData();
         return existingPerf;
     }
 
+    /**
+     * Met à jour l'historique pour une date spécifique.
+     */
     private void updateHistory(MemberPerformance perf, String date, int linesDiff, int delDiff, double scoreDiff, List<String> msgs) {
-        DailyActivity today = perf.getHistory().stream().filter(a -> a.getDate().equals(date)).findFirst().orElse(null);
-        if (today != null) {
-            today.setLinesAdded(today.getLinesAdded() + linesDiff);
-            today.setLinesDeleted(today.getLinesDeleted() + delDiff);
-            today.setDailyScore(Math.round((today.getDailyScore() + scoreDiff) * 100.0) / 100.0);
-            today.setCommitMessages(msgs);
+        // On cherche si une activité existe déjà pour CETTE date précise
+        DailyActivity activityForDate = perf.getHistory().stream()
+                .filter(a -> a.getDate().equals(date))
+                .findFirst()
+                .orElse(null);
+
+        if (activityForDate != null) {
+            // Si elle existe, on incrémente (pour les commits multiples le même jour)
+            activityForDate.setLinesAdded(activityForDate.getLinesAdded() + linesDiff);
+            activityForDate.setLinesDeleted(activityForDate.getLinesDeleted() + delDiff);
+            activityForDate.setDailyScore(Math.round((activityForDate.getDailyScore() + scoreDiff) * 100.0) / 100.0);
+            
+            // On ajoute les nouveaux messages s'ils ne sont pas déjà présents
+            for (String m : msgs) {
+                if (!activityForDate.getCommitMessages().contains(m)) {
+                    activityForDate.getCommitMessages().add(m);
+                }
+            }
         } else {
+            // Sinon, on crée une nouvelle entrée pour cette date
             perf.getHistory().add(new DailyActivity(date, 1, linesDiff, delDiff, scoreDiff, new ArrayList<>(msgs)));
         }
     }
 
-    public List<MemberPerformance> getLeaderboard() { return perfTree.getAll(); }
+    public List<MemberPerformance> getLeaderboard() { 
+        return perfTree.getAll(); 
+    }
 
     public void clearAllData() {
         this.perfTree = new BTree<>(3);
@@ -82,7 +108,11 @@ public class PerformanceService {
     }
 
     private void saveData() {
-        try { objectMapper.writeValue(new File(FILE_PATH), perfTree.getAll()); } catch (IOException e) {}
+        try { 
+            objectMapper.writeValue(new File(FILE_PATH), perfTree.getAll()); 
+        } catch (IOException e) {
+            System.err.println("Erreur sauvegarde JSON: " + e.getMessage());
+        }
     }
 
     private void loadData() {
@@ -91,8 +121,12 @@ public class PerformanceService {
             try {
                 List<MemberPerformance> list = objectMapper.readValue(f, new TypeReference<List<MemberPerformance>>() {});
                 this.perfTree = new BTree<>(3);
-                for (MemberPerformance p : list) { perfTree.insert(p.getAuthor(), p); }
-            } catch (IOException e) {}
+                for (MemberPerformance p : list) { 
+                    perfTree.insert(p.getAuthor(), p); 
+                }
+            } catch (IOException e) {
+                System.err.println("Erreur chargement JSON: " + e.getMessage());
+            }
         }
     }
 }

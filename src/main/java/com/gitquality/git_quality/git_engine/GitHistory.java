@@ -15,7 +15,6 @@ public class GitHistory {
         return commits;
     }
 
-    // Garde la logique de Souha pour filtrer par ID utilisateur
     public List<Commit> getCommitsByUserId(int userId) {
         List<Commit> result = new ArrayList<>();
         for (Commit c : commits) {
